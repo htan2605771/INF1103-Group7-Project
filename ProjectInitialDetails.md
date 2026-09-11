@@ -1,3 +1,5 @@
+GITHUB URL: https://github.com/htan2605771/INF1103-Group7-Project
+
 Requirements
 • Length: Maximum 2 page
 • Format: PDF
