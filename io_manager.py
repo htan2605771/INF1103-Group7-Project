@@ -8,7 +8,7 @@ def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
     print("=" * 60)
 
     # Core details
-    print("COMPLAINT DETAILS:")
+    print("[COMPLAINT DETAILS]\n")
     print(f"Outlet ID         : {complaint.get('outlet_id')}")
     print(f"Customer Name     : {complaint.get("name")}")
     print(f"Category          : {complaint.get("category")}")
@@ -16,7 +16,7 @@ def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
     print("=" * 60)
 
     # AI output details
-    print("AI ANALYSIS:")
+    print("[AI ANALYSIS]\n")
     print(f"Category          : {ai_output.get('ai_category')}")
     print(f"Key Details       : {', '.join(ai_output.get('key_details', []))}")
     print(f"AI Severity       : {ai_output.get('severity').upper()}")
@@ -24,6 +24,17 @@ def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
     print(f"Reputational Risk : {'YES' if ai_output.get('reputational_risk') else 'No'}")
     print(f"Confidence        : {ai_output.get('confidence').upper()}")
     print("-" * 60)
+
+    # Final result (logic manager check, business logic)
+    print("[FINAL TRIAGE DECISION]\n")
+    print(f"Final Severity   : {result.get('final_severity').upper()}")
+    print(f"Action Outcome   : {result.get('outcome').upper()}")
+    print(f"Pattern Flagged  : {'YES (Multiple complaints detected)' if result.get('outlet_flagged') else 'No'}")
+
+    if result.get("override_applied"):
+        print(f"Override Notice  : APPLIED -> {result.get('override_reason')}")
+
+    print("=" * 60 + "\n")
 
 # Test 
 if __name__ == "__main__":
