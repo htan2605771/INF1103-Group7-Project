@@ -1,8 +1,19 @@
 def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
     """Print the final triage outcome to the terminal in a readable format."""
     print("\n" + "=" * 60)
-    print(f"        TRIAGE RESULT FOR COMPLAINT: {complaint.get('complaint_id', 'N/A')}")
+    print(f"          TRIAGE RESULT FOR COMPLAINT: {complaint.get('complaint_id', 'N/A')}")
+    print("=" * 60)
 
+    # Core details
+    print("COMPLAINT DETAILS:")
+    print(f"Outlet ID        : {complaint.get('outlet_id')}")
+    print(f"Customer Name    : {complaint.get("name")}")
+    print(f"Category         : {complaint.get("category")}")
+    print(f"Description      : {complaint.get("description")}")
+
+    #
+
+# Test 
 if __name__ == "__main__":
     print("--- Running io_manager standalone test ---")
 
