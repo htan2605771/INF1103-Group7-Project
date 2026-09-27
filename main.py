@@ -14,17 +14,9 @@ def get_outlet_name():
     outlet_name = input("Enter outlet/branch name: ")
     return outlet_name
 
-def get_incident_date():
-    incident_date = input("Enter date of incident: ")
-    return incident_date
-
-def get_incident_time():
-    incident_time = input("Enter time of incident: ")
-    return incident_time
-
-# def get_order_channel():
-#     order_channel = input("Enter order channel (In-store, Mobile App, Delivery Platform): ")
-#     return order_channel
+def get_incident_datetime():
+    incident_datetime = input("Enter date and time of incident: ")
+    return incident_datetime
 
 def get_order_reference(): # not sure if this is applicable yet
     order_reference = input("Enter order/transaction reference (if applicable): ") # This should be able to accept no input
@@ -39,7 +31,7 @@ def get_complaint_description():
     return complaint_description
 
 def get_follow_up_preference():
-    follow_up = input("Would your like a respnse/follow-up? (Yes/No): ")
+    follow_up = input("Would your like a response/follow-up? (Yes/No): ")
     return follow_up
 
 def collect_complaint(): 
