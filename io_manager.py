@@ -1,0 +1,193 @@
+from datetime import datetime
+
+def get_name():
+    name = input("Enter your name: ").strip()
+    return name
+
+def get_email():
+    email = input("Enter your email: ").strip()
+    return email
+
+def get_phone_number():
+    phone_number = input("Enter your phone number: ").strip()
+    return phone_number
+
+def get_outlet_id():
+    outlet_id = input("Enter outlet/branch ID: ").strip()
+    return outlet_id
+
+def get_incident_datetime(): # ISO format, e.g. "2026-09-18T14:30:00"
+    incident_datetime = input(
+        "Enter date and time of incident "
+        "(YYYY-MM-DDTHH:MM:SS e.g. 2026-09-18T14:30:00): "
+    ).strip()
+    return incident_datetime
+
+def get_order_reference(): # optional, "" if not applicable
+    order_reference = input(
+        "Enter order/transaction reference "
+        "(press Enter if not applicable): "
+    ).strip()
+    return order_reference
+
+def get_complaint_category(): # customer-selected: "food_quality" | "service" | "hygiene" | "billing" | "other"
+    complaint_category = input(
+        "Enter complaint category "
+        "(Food Quality, Service, Hygiene, Billing, Other): "
+    ).strip().lower()
+    return complaint_category
+
+def get_complaint_description(): # free-text complaint
+    complaint_description = input(
+        "Enter complaint description: "
+    ).strip()
+    return complaint_description
+
+def get_follow_up_preference():
+    follow_up = input(
+        "Would you like a response/follow-up? (Yes/No): "
+    ).strip().lower()
+    return follow_up
+
+def collect_complaint(): # dict
+    # name validation
+    while True:
+        name = get_name()
+
+        if name != "":
+            break
+
+        print("Name cannot be empty. Please try again.")
+
+    # email validation
+    while True:
+        email = get_email()
+
+        if (
+            email.count("@") == 1
+            and not email.startswith("@")
+            and not email.endswith("@")
+            and "." in email.split("@")[1]
+            and not email.split("@")[1].startswith(".")
+            and not email.endswith(".")
+        ):
+            break
+
+        print("Invalid email. Please try again.")
+
+
+    # phone number validation
+    while True:
+        phone_number = get_phone_number()
+
+        if phone_number.isdigit() and len(phone_number) == 8:
+            break
+
+        print("Invalid phone number. Please enter an 8-digit phone number.")
+
+
+    # outlet ID validation
+    while True:
+        outlet_id = get_outlet_id()
+
+        if outlet_id != "":
+            break
+
+        print("Outlet/branch ID cannot be empty. Please try again.")
+
+
+    # incident datetime validation
+    while True:
+        incident_datetime = get_incident_datetime()
+
+        try:
+            incident_datetime_object = datetime.strptime(
+                incident_datetime,
+                "%Y-%m-%dT%H:%M:%S"
+            )
+
+            if incident_datetime_object <= datetime.now():
+                break
+
+            print("Incident date and time cannot be in the future.")
+
+        except ValueError:
+            print(
+                "Invalid date/time. "
+                "Please use YYYY-MM-DDTHH:MM:SS format."
+            )
+
+    # order reference
+    # no validation loop needed because this field is optional
+    order_reference = get_order_reference()
+
+    # complaint category validation
+    while True:
+        complaint_category = get_complaint_category()
+
+        if complaint_category == "food quality":
+            complaint_category = "food_quality"
+            break
+        elif complaint_category == "service":
+            break
+        elif complaint_category == "hygiene":
+            break
+        elif complaint_category == "billing":
+            break
+        elif complaint_category == "other":
+            break
+
+        print("Invalid complaint category. Please try again.")
+
+
+    # complaint description validation
+    while True:
+        complaint_description = get_complaint_description()
+
+        if complaint_description != "":
+            break
+
+        print("Complaint description cannot be empty. Please try again.")
+
+
+    # follow-up preference validation
+    while True:
+        follow_up = get_follow_up_preference()
+
+        if follow_up == "yes":
+            wants_followup = True
+            break
+        elif follow_up == "no":
+            wants_followup = False
+            break
+
+        print("Invalid input. Please enter Yes or No.")
+
+    # validated inputs to be stored in a dictionary here
+    complaint = {
+        "complaint_id": "",  # to be generated later
+        "name": name,
+        "email": email,
+        "phone": phone_number,
+        "outlet_id": outlet_id,
+        "datetime": incident_datetime,
+        "order_ref": order_reference,
+        "category": complaint_category,
+        "description": complaint_description,
+        "wants_followup": wants_followup
+    }
+
+    return complaint
+
+complaint = collect_complaint()
+print(complaint)
+
+# get_name()
+# get_email()
+# get_phone_number()
+# get_outlet_id()
+# get_incident_datetime()
+# get_order_reference()
+# get_complaint_category()
+# get_complaint_description()
+# get_follow_up_preference()
