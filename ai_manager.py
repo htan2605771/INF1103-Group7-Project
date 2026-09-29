@@ -1,13 +1,15 @@
 import os # used to access .env variables
+import logging # used to record API errors
 
 from dotenv import load_dotenv # loads variables from the .env file (which is storing the API key)
 from google import genai # used to connect to the Gemini API
 from google.genai import errors # used to handle Gemini API errors
 
-load_dotenv()
+load_dotenv() # loads the .env file
 
 api_key = os.getenv("GEMINI_API_KEY")
 
+logger = logging.getLogger(__name__) # creates a logger for this file
 
 
 def build_prompt(complaint): # build the prompt to send to the AI API
@@ -49,6 +51,7 @@ def build_prompt(complaint): # build the prompt to send to the AI API
 
 def call_ai_api(prompt): # sends the prompt to the AI API and handle API failures
     if not api_key: # checks if the API key is missing
+        logger.error("Gemini API key is missing.")
         return None # stops the function without crashing the program
 
     try: # tries to call the Gemini API
@@ -63,12 +66,13 @@ def call_ai_api(prompt): # sends the prompt to the AI API and handle API failure
 
         return response.text # returns Gemini's response as text
 
-    except errors.APIError: # handles errors from the Gemini API
+    except errors.APIError as error: # handles errors from the Gemini API
+        logger.error(f"Gemini API error: {error}")
         return None
 
-    except Exception: # handles any other unexpected errors
+    except Exception as error: # handles any other unexpected errors
+        logger.error(f"Unexpected AI error: {error}")
         return None
-
 
 
 def parse_ai_response(response): # parse the AI response into JSON
