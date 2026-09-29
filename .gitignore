@@ -1,3 +1,5 @@
 # this will tell Git to ignore .env where the actual AI API key is stored
+# and also the cache
 
 .env
+__pycache__/
