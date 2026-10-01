@@ -1,5 +1,6 @@
 import os # used to access .env variables
 import logging # used to record API errors
+import json
 
 from dotenv import load_dotenv # loads variables from the .env file (which is storing the API key)
 from google import genai # used to connect to the Gemini API
@@ -76,7 +77,15 @@ def call_ai_api(prompt): # sends the prompt to the AI API and handle API failure
 
 
 def parse_ai_response(response): # parse the AI response into JSON
-    pass
+    if not response:
+        return None
+    else:
+        try:
+            data = json.loads(response)
+            return data
+        except json.JSONDecodeError:
+            return None
+
 
 
 def validate_ai_response(ai_output): # validate that the AI output follows the required schema
