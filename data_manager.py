@@ -32,4 +32,19 @@ def load_complaints() -> list[dict]:
 
 
 def filter_by_outlet_and_date(outlet_id: str, days: int) -> list[dict]:
-    return []
+    """Return all complaint records for a given outlet within the last `days` days."""
+    records = load_complaints()
+    cutoff = datetime.now() - timedelta(days=days)
+    filtered = []
+
+    for r in records:
+        if r.get("outlet_id") != outlet_id:
+            continue
+        try:
+            record_dt = datetime.strptime(r.get("datetime", ""), "%Y-%m-%dT%H:%M:%S")
+            if record_dt >= cutoff:
+                filtered.append(r)
+        except ValueError:
+            continue
+
+    return filtered
