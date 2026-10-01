@@ -8,7 +8,13 @@ DATA_FILE = "complaints_data.json"
 
 
 def save_complaint(complaint: dict, ai_output: dict, result: dict) -> None:
-    pass
+    """Merge complaint + ai_output + result into one record and append to storage."""
+    record = {**complaint, **ai_output, **result}
+    records = load_complaints()
+    records.append(record)
+
+    with open(DATA_FILE, "w") as f:
+        json.dump(records, f, indent=2)
 
 
 def load_complaints() -> list[dict]:
