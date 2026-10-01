@@ -131,7 +131,22 @@ def check_schema_fields(ai_output): # checks if each schema field exists in the 
 
     return True
 
+
+def check_additional_rules(ai_output): # checks whether key details items all are of type string and reason is not empty
+    for item in ai_output["key_details"]:
+        if not isinstance(item, str): # if item data type is not string, log error
+            logger.error(f"key_details item is not a string: {item}")
+            return False
         
+    reason_value = ai_output["reason"]
+
+    if not reason_value.strip(): # checks if reason value is empty, if empty log error
+        logger.error("reason value is empty")
+        return False
+
+    return True
+
+
 def validate_ai_response(ai_output): # validate that the AI output follows the required schema
     pass
 
