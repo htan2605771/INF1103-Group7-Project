@@ -1,4 +1,10 @@
-"""data_manager.py - Stub"""
+"""data_manager.py - Handles persistent storage of complaint records."""
+
+import json
+import os
+from datetime import datetime, timedelta
+
+DATA_FILE = "complaints_data.json"
 
 
 def save_complaint(complaint: dict, ai_output: dict, result: dict) -> None:
