@@ -48,3 +48,40 @@ def filter_by_outlet_and_date(outlet_id: str, days: int) -> list[dict]:
             continue
 
     return filtered
+
+# if __name__ == "__main__":
+#     print("--- Running data_manager standalone test ---")
+
+#     dummy_complaint = {
+#         "complaint_id": "CMP-0001",
+#         "name": "Test User",
+#         "email": "test@test.com",
+#         "phone": "91234567",
+#         "outlet_id": "OUT01",
+#         "datetime": "2026-09-30T10:00:00",
+#         "order_ref": "",
+#         "category": "hygiene",
+#         "description": "Found a bug in my soup",
+#         "wants_followup": True
+#     }
+
+#     dummy_ai = {
+#         "ai_category": "hygiene",
+#         "key_details": ["bug in food"],
+#         "severity": "high",
+#         "reason": "Hygiene issue mentioned",
+#         "reputational_risk": True,
+#         "confidence": "high"
+#     }
+
+#     dummy_result = {
+#         "final_severity": "high",
+#         "outcome": "route_to_manager",
+#         "outlet_flagged": False,
+#         "override_applied": True,
+#         "override_reason": "Hygiene keyword detected"
+#     }
+
+#     save_complaint(dummy_complaint, dummy_ai, dummy_result)
+#     print("Loaded:", load_complaints())
+#     print("Filtered (OUT01, 7 days):", filter_by_outlet_and_date("OUT01", 7))
