@@ -160,6 +160,27 @@ def validate_ai_response(ai_output): # validate that the AI output follows the r
     
     return True
 
-    
-def process_complaint(complaint): # run a complaint through the complete AI processing flow
-    pass
+
+def fallback_ai_output(): # returns a default ai_output when the AI fails, flagged for manual review
+    fallback = {
+        "ai_category": "other",
+        "key_details": [],
+        "severity": "medium",
+        "reason": "AI analysis unavailable, flagged for manual review",
+        "reputational_risk": False,
+        "confidence": "low"
+    }
+    return fallback
+
+
+def get_ai_output(complaint): # run a complaint through the complete AI processing flow
+    prompt = build_prompt(complaint)
+    for i in range(2): # tries the AI flow twice (1st attempt + 1 retry)
+        response = call_ai_api(prompt)
+        ai_output = parse_ai_response(response)
+        if validate_ai_response(ai_output): # if validate is successful return the ai_output
+            return ai_output
+        else:
+            logger.error(f"AI validation failed try number: {i+1}")
+    logger.error("AI failed after 2 attempts, using fallback output")
+    return fallback_ai_output() # returns the fallback ai_output
