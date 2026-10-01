@@ -100,6 +100,18 @@ def parse_ai_response(response): # parse the AI response into JSON
             return None
 
 
+def ai_output_schema(): # returns the expected ai_output fields, data types and allowable values
+    schema = {
+        "ai_category": [str, ("food_quality", "service", "hygiene", "billing", "other")],
+        "key_details": [list, None],
+        "severity": [str, ("low", "medium", "high")],
+        "reason": [str, None],
+        "reputational_risk": [bool, None],
+        "confidence": [str, ("low", "medium", "high")]
+    }
+    return schema
+
+
 def validate_ai_response(ai_output): # validate that the AI output follows the required schema
     pass
 
