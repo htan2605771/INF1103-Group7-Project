@@ -77,13 +77,19 @@ def call_ai_api(prompt): # sends the prompt to the AI API and handle API failure
 
 
 def parse_ai_response(response): # parse the AI response into JSON
-    if not response:
+    if not response: # checks whether the response is empty or None
         logger.error("AI response is empty, there is no response to parse.")
         return None
     else:
         try:
-            data = json.loads(response)
+            data = json.loads(response) # attempts to parse the response from JSON to a dictionary object
+
+            if not isinstance(data, dict): # checks whether the parsed object is a dictionary
+                logger.error("Parsed AI response is not a dictionary object.")
+                return None
+            
             return data
+        
         except json.JSONDecodeError as error:
             logger.error(f"Failed to parse AI response as JSON: {error}")
             return None
