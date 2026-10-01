@@ -184,3 +184,64 @@ def get_ai_output(complaint): # run a complaint through the complete AI processi
             logger.error(f"AI validation failed try number: {i+1}")
     logger.error("AI failed after 2 attempts, using fallback output")
     return fallback_ai_output() # returns the fallback ai_output
+
+
+if __name__ == "__main__":
+    dummy_complaint = {
+        "complaint_id": "CMP-0191",
+        "name": "Sarah Tan",
+        "email": "sarah.tan@example.com",
+        "phone": "98765432",
+        "outlet_id": "OUT-011",
+        "datetime": "2026-09-30T14:30:00",
+        "order_ref": "ORD-5787",
+        "category": "hygiene",
+        "description": "There was a hair inside my food and the table had some food stains.",
+        "wants_followup": True
+    }
+
+    good_output = {
+        "ai_category": "service",
+        "key_details": ["Staff was rude", "Order was delayed"],
+        "severity": "medium",
+        "reason": "Poor staff attitude and delayed service can affect customer experience.",
+        "reputational_risk": False,
+        "confidence": "high"
+    }
+
+    print("\n--- parse_ai_response tests ---")
+    print(parse_ai_response('```json\n{"a": 1}\n```'))  # {'a': 1}
+    print(parse_ai_response('{"a": 1}'))                # {'a': 1}
+    print(parse_ai_response('hello'))                   # None
+    print(parse_ai_response('[1, 2]'))                  # None
+    print(parse_ai_response(None))                      # None
+
+    print("\n--- validate_ai_response tests ---")
+    print(validate_ai_response(good_output))            # True
+    print(validate_ai_response(None))                   # False
+
+    missing_field = dict(good_output)
+    del missing_field["confidence"]
+    print(validate_ai_response(missing_field))          # False
+
+    wrong_type = dict(good_output)
+    wrong_type["reputational_risk"] = "false" 
+    print(validate_ai_response(wrong_type))             # False
+
+    invalid_value = dict(good_output)
+    invalid_value["severity"] = "urgent"
+    print(validate_ai_response(invalid_value))          # False
+
+    bad_detail = dict(good_output)
+    bad_detail["key_details"] = ["staff was rude", 15]
+    print(validate_ai_response(bad_detail))             # False
+
+    empty_reason = dict(good_output)
+    empty_reason["reason"] = "   "
+    print(validate_ai_response(empty_reason))           # False
+
+    print("\n--- fallback_ai_output tests ---")
+    print(validate_ai_response(fallback_ai_output()))   # True
+
+    print("\n--- get_ai_output from gemini api tests ---")
+    print(get_ai_output(dummy_complaint))
