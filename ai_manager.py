@@ -148,8 +148,18 @@ def check_additional_rules(ai_output): # checks whether key details items all ar
 
 
 def validate_ai_response(ai_output): # validate that the AI output follows the required schema
-    pass
+    if not isinstance(ai_output, dict): # rejects None or non-dictionary ai_output from a failed parse
+        logger.error("ai_output data type is not a dictionary")
+        return False
+    
+    if not check_schema_fields(ai_output): # if check_schema_fields function is false, return false
+        return False
+    
+    if not check_additional_rules(ai_output): # if check_additional_rules function is false, return false
+        return False
+    
+    return True
 
-
+    
 def process_complaint(complaint): # run a complaint through the complete AI processing flow
     pass
