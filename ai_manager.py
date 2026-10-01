@@ -80,9 +80,14 @@ def parse_ai_response(response): # parse the AI response into JSON
     if not response: # checks whether the response is empty or None
         logger.error("AI response is empty, there is no response to parse.")
         return None
+
     else:
+        text = response.strip().strip("`") # removes leading and trailing whitespace and backticks from the response
+        if text.lower().startswith("json"): # removes the json prefix if it exists, as some AI responses may include it
+            text = text[4:]
+
         try:
-            data = json.loads(response) # attempts to parse the response from JSON to a dictionary object
+            data = json.loads(text) # attempts to parse the response from JSON to a dictionary object
 
             if not isinstance(data, dict): # checks whether the parsed object is a dictionary
                 logger.error("Parsed AI response is not a dictionary object.")
@@ -93,7 +98,6 @@ def parse_ai_response(response): # parse the AI response into JSON
         except json.JSONDecodeError as error:
             logger.error(f"Failed to parse AI response as JSON: {error}")
             return None
-
 
 
 def validate_ai_response(ai_output): # validate that the AI output follows the required schema
