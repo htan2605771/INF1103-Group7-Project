@@ -112,6 +112,26 @@ def ai_output_schema(): # returns the expected ai_output fields, data types and 
     return schema
 
 
+def check_schema_fields(ai_output): # checks if each schema field exists in the ai_output, has the correct data type and allowed value
+    schema = ai_output_schema()
+    for field, rule in schema.items(): # field = key, rule = values. e.g. field = severity, rule = [str, ("low", "medium", "high")]
+        if field not in ai_output: # if a schema field is missing in ai_output, log error
+            logger.error(f"missing field: {field}")
+            return False
+        
+        data_value = ai_output[field]
+
+        if not isinstance(data_value, rule[0]): # if ai_output data type is not the same as schema, log error
+            logger.error(f"wrong data type for {field}")
+            return False
+
+        if rule[1] is not None and data_value not in rule[1]: # if allowable value != None and data value is not in the allowable values, log error
+            logger.error(f"invalid value: {data_value} for field: {field}")
+            return False
+
+    return True
+
+        
 def validate_ai_response(ai_output): # validate that the AI output follows the required schema
     pass
 
