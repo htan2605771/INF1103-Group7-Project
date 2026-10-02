@@ -20,7 +20,7 @@ def process_complaint() -> None:
     result = logic_manager.get_final_result(complaint, ai_output, history)
 
     # # 5. Persist complete record (complaint + ai_output + result)
-    # data_manager.save_complaint(complaint, ai_output, result)
+    data_manager.save_complaint(complaint, ai_output, result)
 
     # 6. Output the final decision back to the user
     io_manager.display_result(complaint, ai_output, result)
