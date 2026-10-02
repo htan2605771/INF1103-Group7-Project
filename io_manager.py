@@ -1,4 +1,9 @@
 from datetime import datetime
+import re
+
+#Makes text red to show the user something is wrong, and then resets the color back to normal
+RED = "\033[91m"
+RESET = "\033[0m"
 
 def get_name():
     name = input("Enter your name: ").strip()
@@ -57,34 +62,28 @@ def collect_complaint(): # dict
         if name != "":
             break
 
-        print("Name cannot be empty. Please try again.")
-
+        print(f"{RED}[!] Name cannot be empty. Please try again.{RESET}")
+    
     # email validation
+    email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
     while True:
         email = get_email()
 
-        if (
-            email.count("@") == 1
-            and not email.startswith("@")
-            and not email.endswith("@")
-            and "." in email.split("@")[1]
-            and not email.split("@")[1].startswith(".")
-            and not email.endswith(".")
-        ):
+        if re.match(email_pattern, email):
             break
 
-        print("Invalid email. Please try again.")
+        print(f"{RED}[!] Invalid email format. (e.g., user@domain.com){RESET}")
 
 
     # phone number validation
+    phone_pattern = r"^\d{8}$"
     while True:
         phone_number = get_phone_number()
 
-        if phone_number.isdigit() and len(phone_number) == 8:
+        if re.match(phone_pattern, phone_number):
             break
 
-        print("Invalid phone number. Please enter an 8-digit phone number.")
-
+        print(f"{RED}[!] Invalid phone number. Please enter an 8-digit phone number.{RESET}")
 
     # outlet ID validation
     while True:
@@ -93,7 +92,7 @@ def collect_complaint(): # dict
         if outlet_id != "":
             break
 
-        print("Outlet/branch ID cannot be empty. Please try again.")
+        print(f"{RED}[!] Outlet/branch ID cannot be empty. Please try again.{RESET}")
 
 
     # incident datetime validation
@@ -109,12 +108,12 @@ def collect_complaint(): # dict
             if incident_datetime_object <= datetime.now():
                 break
 
-            print("Incident date and time cannot be in the future.")
+            print(f"{RED}[!] Incident date and time cannot be in the future.{RESET}")
 
         except ValueError:
             print(
-                "Invalid date/time. "
-                "Please use YYYY-MM-DDTHH:MM:SS format."
+                f"{RED}[!] Invalid date/time. "
+                f"Please use YYYY-MM-DDTHH:MM:SS format.{RESET}"
             )
 
     # order reference
@@ -137,7 +136,7 @@ def collect_complaint(): # dict
         elif complaint_category == "other":
             break
 
-        print("Invalid complaint category. Please try again.")
+        print(f"{RED}[!] Invalid complaint category. Please try again.{RESET}")
 
 
     # complaint description validation
@@ -147,8 +146,14 @@ def collect_complaint(): # dict
         if complaint_description != "":
             break
 
-        print("Complaint description cannot be empty. Please try again.")
+        print(f"{RED}[!] Complaint description cannot be empty. Please try again.{RESET}")
+    
+    # Matrix check: Short or Ambiguous Text Submission
+    words = complaint_description.split()
+    is_ambiguous = len(complaint_description) < 10 or len(words) < 3
 
+    if is_ambiguous:
+        print("\n[i] Short or ambiguous text detected. Flagging for Manual Review...")
 
     # follow-up preference validation
     while True:
@@ -161,7 +166,7 @@ def collect_complaint(): # dict
             wants_followup = False
             break
 
-        print("Invalid input. Please enter Yes or No.")
+        print(f"{RED}[!] Invalid input. Please enter Yes or No.{RESET}")
 
     # validated inputs to be stored in a dictionary here
     complaint = {
@@ -174,7 +179,8 @@ def collect_complaint(): # dict
         "order_ref": order_reference,
         "category": complaint_category,
         "description": complaint_description,
-        "wants_followup": wants_followup
+        "wants_followup": wants_followup,
+        "is_ambiguous": is_ambiguous
     }
 
     return complaint
@@ -210,16 +216,16 @@ def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
     print("[AI ANALYSIS]\n")
     print(f"Category          : {ai_output.get('ai_category')}")
     print(f"Key Details       : {', '.join(ai_output.get('key_details', []))}")
-    print(f"AI Severity       : {ai_output.get('severity').upper()}")
+    print(f"AI Severity       : {str(ai_output.get('severity', 'N/A')).upper()}")
     print(f"Reason            : {ai_output.get('reason')}")
     print(f"Reputational Risk : {'YES' if ai_output.get('reputational_risk') else 'No'}")
-    print(f"Confidence        : {ai_output.get('confidence').upper()}")
+    print(f"Confidence        : {str(ai_output.get('confidence', 'N/A')).upper()}")
     print("-" * 60)
 
     # Final result (logic manager check, business logic)
     print("[FINAL TRIAGE DECISION]\n")
-    print(f"Final Severity   : {result.get('final_severity').upper()}")
-    print(f"Action Outcome   : {result.get('outcome').upper()}")
+    print(f"Final Severity   : {str(result.get('final_severity', 'N/A')).upper()}")
+    print(f"Action Outcome   : {str(result.get('outcome', 'N/A')).upper()}")
     print(f"Pattern Flagged  : {'YES (Multiple complaints detected)' if result.get('outlet_flagged') else 'No'}")
 
     if result.get("override_applied"):

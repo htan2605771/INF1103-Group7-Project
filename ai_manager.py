@@ -1,9 +1,11 @@
 import os # used to access .env variables
 import logging # used to record API errors
+import time # used to implement retry delays
 
 from dotenv import load_dotenv # loads variables from the .env file (which is storing the API key)
 from google import genai # used to connect to the Gemini API
 from google.genai import errors # used to handle Gemini API errors
+from google.genai import types # used to configure the Gemini API request
 
 load_dotenv() # loads the .env file
 
@@ -49,31 +51,42 @@ def build_prompt(complaint): # build the prompt to send to the AI API
     return prompt
 
 
-def call_ai_api(prompt): # sends the prompt to the AI API and handle API failures
+def call_ai_api(prompt, max_retries=3): # sends the prompt to the AI API and handle API failures
     if not api_key: # checks if the API key is missing
         logger.error("Gemini API key is missing.")
         return None # stops the function without crashing the program
 
-    try: # tries to call the Gemini API
-        client = genai.Client(api_key=api_key) # creates a Gemini client using the API key
+    base_delay = 2
 
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=prompt # sends the prompt to Gemini
-        )
+    for attempt in range(1, max_retries + 1):
+        try: # tries to call the Gemini API
+            client = genai.Client(api_key=api_key) # creates a Gemini client using the API key
 
-        client.close() # closes the Gemini client
+            response = client.models.generate_content(
+                model="gemini-3.8-flash",
+                contents=prompt, # sends the prompt to Gemini
+                config=types.GenerateContentConfig(
+                    #forces a JSON response
+                    response_mime_type="application/json",  # ADDED: forces strict JSON response
+                    temperature=0.2
+                )
+            )
 
-        return response.text # returns Gemini's response as text
+            client.close() # closes the Gemini client
 
-    except errors.APIError as error: # handles errors from the Gemini API
-        logger.error(f"Gemini API error: {error}")
-        return None
+            return response.text # returns Gemini's response as text
 
-    except Exception as error: # handles any other unexpected errors
-        logger.error(f"Unexpected AI error: {error}")
-        return None
+        except (errors.APIError, Exception) as error: # handles API and network errors
+            logger.error(f"Gemini API attempt {attempt}/{max_retries} failed: {error}")
+            
+            # FIXED: Do NOT 'return None' here, wait and allow the loop to try again!
+            if attempt < max_retries:
+                sleep_time = base_delay * attempt
+                print(f"[!] AI call failed. Retrying in {sleep_time}s... (Attempt {attempt}/{max_retries})")
+                time.sleep(sleep_time)
 
+    # Returns None only if all retry attempts were exhausted
+    return None
 
 def parse_ai_response(response): # parse the AI response into JSON
     pass
