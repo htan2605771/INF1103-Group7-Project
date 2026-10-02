@@ -161,12 +161,12 @@ def validate_ai_response(ai_output): # validate that the AI output follows the r
     return True
 
 
-def fallback_ai_output(): # returns a default ai_output when the AI fails, flagged for manual review
+def fallback_ai_output(complaint): # returns a default ai_output when the AI fails, flagged for manual review
     fallback = {
-        "ai_category": "other",
+        "ai_category": complaint["category"], # uses customer-selected category as a fallback for ai_category
         "key_details": [],
         "severity": "medium",
-        "reason": "AI analysis unavailable, flagged for manual review",
+        "reason": "AI analysis unavailable, using customer-selected category, flagged for manual review",
         "reputational_risk": False,
         "confidence": "low"
     }
@@ -183,7 +183,7 @@ def get_ai_output(complaint): # run a complaint through the complete AI processi
         else:
             logger.error(f"AI validation failed try number: {i+1}")
     logger.error("AI failed after 2 attempts, using fallback output")
-    return fallback_ai_output() # returns the fallback ai_output
+    return fallback_ai_output(complaint) # returns the fallback ai_output
 
 
 if __name__ == "__main__":
@@ -241,7 +241,7 @@ if __name__ == "__main__":
     print(validate_ai_response(empty_reason))           # False
 
     print("\n--- fallback_ai_output tests ---")
-    print(validate_ai_response(fallback_ai_output()))   # True
+    print(validate_ai_response(fallback_ai_output(dummy_complaint)))   # True
 
     print("\n--- get_ai_output from gemini api tests ---")
     print(get_ai_output(dummy_complaint))
