@@ -204,22 +204,6 @@ def get_ai_output(complaint): # run a complaint through the complete AI processi
 
 
 if __name__ == "__main__":
-    #MALFORMED JSON TESTS 1 & 2
-    # Test 1: Markdown-fenced JSON string
-    '''fenced_json = '```json\n{"ai_category": "service"}\n```'
-    parsed_result = parse_ai_response(fenced_json)
-    print("Test 1 Result:", parsed_result)'''
-    #output should be...
-    #{'a': 1}
-
-    # Test 2: Non-JSON plain text
-    '''non_json_text = "hello world"
-    invalid_result = parse_ai_response(non_json_text)
-    print("Test 2 Result:", invalid_result)'''
-    #output should be...
-    #Failed to parse AI response as JSON: Expecting value: line 1 column 1 (char 0)
-    #None
-
     #AI HIGH RISK KEYWORD TEST
     # 1. Test complaint containing high-priority safety keywords
     test_complaint = {
