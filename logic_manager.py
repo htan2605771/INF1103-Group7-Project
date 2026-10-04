@@ -1,9 +1,51 @@
+SAFETY_KEYWORDS = [
+    "food poisoning", "hospital", "allergy", "allergic", "vomit", 
+    "diarrhea", "rat", "cockroach", "glass", "metal", "insect", "bug"
+]
+
+
 def get_final_result(complaint: dict, ai_output: dict, history: list[dict]) -> dict:
     """Temporary stub returning default business result."""
+
+    # 1. Handle Short or Ambiguous Text Submissions
+    if complaint.get("is_ambiguous", False):
+        return {
+            "final_severity": "manual_review",
+            "outcome": "route_to_manual_queue",
+            "outlet_flagged": False,
+            "override_applied": True,
+            "override_reason": "Short or ambiguous text detected. Flagged for Manual Review."
+        }
+
+    # 2. Check for Pattern Flags (e.g., 3 or more past complaints at same outlet)
+    outlet_flagged = len(history) >= 3
+    
+    # 3. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
+    description_lower = complaint.get("description", "").lower()
+    has_safety_keyword = any(keyword in description_lower for keyword in SAFETY_KEYWORDS)
+
+    ai_severity = ai_output.get("severity", "medium")
+    final_severity = ai_severity
+    override_applied = False
+    override_reason = ""
+
+    # Force severity to High if critical safety terms are present
+    if has_safety_keyword and ai_severity != "high":
+        final_severity = "high"
+        override_applied = True
+        override_reason = "High-priority safety keyword detected (Auto-overridden to High)."
+        print("\n[!] High-priority food safety issue detected - Routing to Manager.")
+
+    # 4. Determine Action Outcome based on severity or reputational risk or pattern flag
+    if final_severity == "high" or ai_output.get("reputational_risk") or outlet_flagged:
+        outcome = "route_to_manager"
+    else:
+        outcome = "standard_queue"
+    
     return {
-        "final_severity": ai_output.get("severity", "medium"),
-        "outcome": "log",
-        "outlet_flagged": False,
-        "override_applied": False,
-        "override_reason": "",
+        "final_severity": final_severity,
+        "outcome": outcome,
+        "outlet_flagged": outlet_flagged,
+        "override_applied": override_applied,
+        "override_reason": override_reason,
     }

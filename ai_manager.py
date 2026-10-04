@@ -6,14 +6,17 @@ import time # used to implement retry delays
 from dotenv import load_dotenv # loads variables from the .env file (which is storing the API key)
 from google import genai # used to connect to the Gemini API
 from google.genai import errors # used to handle Gemini API errors
-from google.genai import types # used to configure the Gemini API request
+from google.genai import types
+
+from logic_manager import get_final_result # used to configure the Gemini API request
 
 load_dotenv() # loads the .env file
 
+#Test for invalid API key
 api_key = os.getenv("GEMINI_API_KEY")
+#api_key = "INVALID_KEY_TEST"
 
 logger = logging.getLogger(__name__) # creates a logger for this file
-
 
 def build_prompt(complaint): # build the prompt to send to the AI API
     prompt = f"""
@@ -64,12 +67,12 @@ def call_ai_api(prompt, max_retries=3): # sends the prompt to the AI API and han
             client = genai.Client(api_key=api_key) # creates a Gemini client using the API key
 
             response = client.models.generate_content(
-                model="gemini-3.8-flash",
+                model="gemini-2.5-flash",
                 contents=prompt, # sends the prompt to Gemini
                 config=types.GenerateContentConfig(
                     #forces a JSON response
                     response_mime_type="application/json",  # ADDED: forces strict JSON response
-                    temperature=0.2
+                    temperature=0.2 #Low temperature ensures deterministic, consistent output and reduces randomness for strict JSON parsing
                 )
             )
 
@@ -95,6 +98,7 @@ def parse_ai_response(response): # parse the AI response into JSON
         return None
 
     else:
+        #for markdown fences
         text = response.strip().strip("`") # removes leading and trailing whitespace and backticks from the response
         if text.lower().startswith("json"): # removes the json prefix if it exists, as some AI responses may include it
             text = text[4:]
@@ -200,6 +204,41 @@ def get_ai_output(complaint): # run a complaint through the complete AI processi
 
 
 if __name__ == "__main__":
+    #MALFORMED JSON TESTS 1 & 2
+    # Test 1: Markdown-fenced JSON string
+    '''fenced_json = '```json\n{"ai_category": "service"}\n```'
+    parsed_result = parse_ai_response(fenced_json)
+    print("Test 1 Result:", parsed_result)'''
+    #output should be...
+    #{'a': 1}
+
+    # Test 2: Non-JSON plain text
+    '''non_json_text = "hello world"
+    invalid_result = parse_ai_response(non_json_text)
+    print("Test 2 Result:", invalid_result)'''
+    #output should be...
+    #Failed to parse AI response as JSON: Expecting value: line 1 column 1 (char 0)
+    #None
+
+    #AI HIGH RISK KEYWORD TEST
+    # 1. Test complaint containing high-priority safety keywords
+    test_complaint = {
+        "description": "I had food poisoning and vomit after eating.",
+        "is_ambiguous": False
+    }
+    # 2. Simulated AI output returning severity "low"
+    simulated_ai_output = {
+        "severity": "low",
+        "reputational_risk": False
+    }
+    # History with fewer than 3 entries so pattern flag won't trigger
+    history = []
+    # Run
+    result = get_final_result(test_complaint, simulated_ai_output, history)
+    # Output the returned dictionary to verify
+    print("\n--- Final Result Output ---")
+    print(result)
+
     dummy_complaint = {
         "complaint_id": "CMP-0191",
         "name": "Sarah Tan",
