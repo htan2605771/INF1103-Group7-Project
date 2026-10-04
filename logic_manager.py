@@ -49,3 +49,61 @@ def get_final_result(complaint: dict, ai_output: dict, history: list[dict]) -> d
         "override_applied": override_applied,
         "override_reason": override_reason,
     }
+
+def evaluate_complaint(complaint: dict, ai_output: dict, history: list[dict]) -> dict:
+    """
+    Evaluates incoming complaint against business rules, overriding AI misclassifications
+    for safety risks or ambiguous input.
+    """
+    # 1. Handle Short or Ambiguous Text Submissions
+    if complaint.get("is_ambiguous", False):
+        return {
+            "final_severity": "manual_review",
+            "override_applied": True,
+            "override_reason": "Short or ambiguous text detected. Flagged for Manual Review.",
+            "outlet_flagged": False
+        }
+
+    # 2. Check for Pattern Flags (e.g., 3 or more past complaints at same outlet)
+    outlet_flagged = len(history) >= 3
+    
+    # 3. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
+    description_lower = complaint.get("description", "").lower()
+    has_safety_keyword = any(keyword in description_lower for keyword in SAFETY_KEYWORDS)
+
+    ai_severity = ai_output.get("severity", "medium")
+    final_severity = ai_severity
+    override_applied = False
+    override_reason = ""
+
+    # Force severity to High if critical safety terms are present
+    if has_safety_keyword and ai_severity != "high":
+        final_severity = "high"
+        override_applied = True
+        override_reason = "High-priority safety keyword detected (Auto-overridden to High)."
+        print("\n[!] High-priority food safety issue detected - Routing to Manager.")
+
+    return {
+        "final_severity": final_severity,
+        "override_applied": override_applied,
+        "override_reason": override_reason,
+        "outlet_flagged": outlet_flagged
+    }
+
+SEVERITY_WEIGHTS = {
+    "low": 10,
+    "medium": 25,
+    "high": 50,
+    "manual_review": 15
+}
+
+def calculate_score(final_severity: str, reputational_risk: bool, outlet_flagged: bool) -> int:
+    """Computes a numerical priority score based on severity, reputational risk, and repeat issues."""
+    score = SEVERITY_WEIGHTS.get(final_severity, 10)
+
+    if reputational_risk:
+        score += 30  # Add weight for reputational risk
+    if outlet_flagged:
+        score += 20  # Add weight for repeat outlet issues
+
+    return score

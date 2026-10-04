@@ -17,8 +17,20 @@ def process_complaint() -> None:
     )
 
     # # 4. Evaluate business rules and determine final triage severity/action
-    result = logic_manager.get_final_result(complaint, ai_output, history)
+    evaluation = logic_manager.evaluate_complaint(complaint, ai_output, history)
+    
+    score = logic_manager.calculate_score(
+        evaluation["final_severity"],
+        ai_output.get("reputational_risk", False),
+        evaluation["outlet_flagged"]
+    )
 
+    # Combine evaluation result and score into final decision object
+    result = {
+        **evaluation,
+        "score": score
+    }
+    
     # # 5. Persist complete record (complaint + ai_output + result)
     data_manager.save_complaint(complaint, ai_output, result)
 
