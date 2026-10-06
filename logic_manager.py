@@ -65,7 +65,7 @@ def evaluate_complaint(complaint: dict, ai_output: dict, history: list[dict]) ->
         }
 
     # 2. Check for Pattern Flags (e.g., 3 or more past complaints at same outlet)
-    outlet_flagged = len(history) >= 3
+    outlet_flagged = check_outlet_pattern(complaint["outlet_id"], history + [complaint])
     
     # 3. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
     description_lower = complaint.get("description", "").lower()
@@ -107,3 +107,23 @@ def calculate_score(final_severity: str, reputational_risk: bool, outlet_flagged
         score += 20  # Add weight for repeat outlet issues
 
     return score
+
+
+def check_outlet_pattern(outlet_id: str, history: list[dict], days: int = 7) -> bool: # check if outlet has 2 or more complaints in the last 7 days and at least one complaint is hygiene
+    # history is already filtered with the filter function which comes before this business rule checking in the main.py flow
+    # includes current complaint, passed in as history + [complaint] when function is called
+    if len(history) < 2:
+        return False
+    for record in history:
+        if record["category"] == "hygiene" or record.get("ai_category") == "hygiene":
+            return True
+    return False
+
+if __name__ == "__main__":
+    print("--- check outlet patten tests ---")
+    print(check_outlet_pattern("B12", [])) # False, no complaints
+    print(check_outlet_pattern("B12", [{"category": "hygiene"}])) # False, only one complaint
+    print(check_outlet_pattern("B12", [{"category": "service"}, {"category": "hygiene"}])) # True
+    print(check_outlet_pattern("B12", [{"category": "service"}, {"category": "billing"}])) # False, no hygiene
+    print(check_outlet_pattern("B12", [{"category": "service", "ai_category": "hygiene"}, {"category": "billing"}])) # True, ai category says hygiene
+    print(check_outlet_pattern("B12", [{"category": "service", "ai_category": "service"}, {"category": "billing"}])) # False
