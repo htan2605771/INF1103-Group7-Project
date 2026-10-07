@@ -65,7 +65,7 @@ def evaluate_complaint(complaint: dict, ai_output: dict, history: list[dict]) ->
         }
 
     # 2. Check for Pattern Flags (e.g., 2 or more complaints at same outlet in the last 7 days and at least 1 hygiene complaint)
-    outlet_flagged = check_outlet_pattern(complaint["outlet_id"], history + [complaint])
+    outlet_flagged = check_outlet_pattern(history + [complaint])
     
     # 3. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
     description_lower = complaint.get("description", "").lower()
@@ -112,8 +112,8 @@ def calculate_score(final_severity: str, reputational_risk: bool, outlet_flagged
     return score
 
 
-def check_outlet_pattern(outlet_id: str, history: list[dict], days: int = 7) -> bool: # check if outlet has 2 or more complaints in the last 7 days and at least one complaint is hygiene
-    # history is already filtered with the filter function which comes before this business rule checking in the main.py flow
+def check_outlet_pattern(history: list[dict]) -> bool: # check if outlet has 2 or more complaints in the last 7 days and at least one complaint is hygiene
+    # history is already filtered with the filter function by outlet and within the last 7 days which comes before this business rule checking in the main.py flow
     # includes current complaint, passed in as history + [complaint] when function is called
     if len(history) < 2:
         return False
@@ -143,13 +143,13 @@ def determine_outcome(final_severity: str, ai_output: dict, outlet_flagged: bool
 
 
 if __name__ == "__main__":
-    print("--- check outlet patten tests ---")
-    print(check_outlet_pattern("B12", [])) # False, no complaints
-    print(check_outlet_pattern("B12", [{"category": "hygiene"}])) # False, only one complaint
-    print(check_outlet_pattern("B12", [{"category": "service"}, {"category": "hygiene"}])) # True
-    print(check_outlet_pattern("B12", [{"category": "service"}, {"category": "billing"}])) # False, no hygiene
-    print(check_outlet_pattern("B12", [{"category": "service", "ai_category": "hygiene"}, {"category": "billing"}])) # True, ai category says hygiene
-    print(check_outlet_pattern("B12", [{"category": "service", "ai_category": "service"}, {"category": "billing"}])) # False
+    print("--- check outlet pattern tests ---")
+    print(check_outlet_pattern([])) # False, no complaints
+    print(check_outlet_pattern([{"category": "hygiene"}])) # False, only one complaint
+    print(check_outlet_pattern([{"category": "service"}, {"category": "hygiene"}])) # True
+    print(check_outlet_pattern([{"category": "service"}, {"category": "billing"}])) # False, no hygiene
+    print(check_outlet_pattern([{"category": "service", "ai_category": "hygiene"}, {"category": "billing"}])) # True, ai category says hygiene
+    print(check_outlet_pattern([{"category": "service", "ai_category": "service"}, {"category": "billing"}])) # False
 
     print("--- determine outcome tests ---")
     ok_ai = {"reputational_risk": False, "confidence": "high"}

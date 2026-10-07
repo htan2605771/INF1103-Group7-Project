@@ -108,9 +108,9 @@ def apply_business_rules(complaint: dict, ai_output: dict) -> dict:
     - reputational_risk == True -> outcome = 'route_to_manager'
     Returns a partial result dict (final_severity, outcome, override_applied, override_reason)."""
 
-def check_outlet_pattern(outlet_id: str, history: list[dict], days: int = 7) -> bool:
+def check_outlet_pattern(history: list[dict]) -> bool:
     """Query complaint history (via data_manager) for this outlet.
-    Returns True if outlet has 2+ complaints in the last `days` days
+    Returns True if outlet has 2+ complaints in the last 7 days
     AND at least one is hygiene-related."""
 
 def get_final_result(complaint: dict, ai_output: dict, history: list[dict]) -> dict:
