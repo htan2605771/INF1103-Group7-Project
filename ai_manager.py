@@ -14,7 +14,7 @@ load_dotenv() # loads the .env file
 
 #Test for invalid API key
 api_key = os.getenv("GEMINI_API_KEY")
-#api_key = "INVALID_KEY_TEST"
+api_key = "INVALID_KEY_TEST"
 
 logger = logging.getLogger(__name__) # creates a logger for this file
 
@@ -67,7 +67,7 @@ def call_ai_api(prompt, max_retries=3): # sends the prompt to the AI API and han
             client = genai.Client(api_key=api_key) # creates a Gemini client using the API key
 
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.8-flash",
                 contents=prompt, # sends the prompt to Gemini
                 config=types.GenerateContentConfig(
                     #forces a JSON response
