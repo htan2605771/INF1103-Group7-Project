@@ -58,39 +58,35 @@ def build_prompt(complaint): # build the prompt to send to the AI API
 def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the AI API and handle API failures
     if not api_key: # checks if the API key is missing
         logger.error("Gemini API key is missing.")
-        return None # stops the function without crashing the program
+        return None
 
     base_delay = 2
 
     for attempt in range(1, max_retries + 1):
-        try: # tries to call the Gemini API
-            client = genai.Client(api_key=api_key) # creates a Gemini client using the API key
+        try:
+            client = genai.Client(api_key=api_key)
 
             response = client.models.generate_content(
                 model="gemini-3.8-flash",
                 contents=prompt, # sends the prompt to Gemini
                 config=types.GenerateContentConfig(
-                    #forces a JSON response
-                    response_mime_type="application/json",  # ADDED: forces strict JSON response
-                    temperature=0.2 #Low temperature ensures deterministic, consistent output and reduces randomness for strict JSON parsing
+                    response_mime_type="application/json",
+                    temperature=0.2
                 )
             )
 
-            client.close() # closes the Gemini client
+            client.close()
+            return response.text
 
-            return response.text # returns Gemini's response as text
-
-        except (errors.APIError, Exception) as error: # handles API and network errors
-            logger.error(f"Gemini API attempt {attempt}/{max_retries} failed: {error}")
-            
-            # FIXED: Do NOT 'return None' here, wait and allow the loop to try again!
+        except (errors.APIError, Exception) as error:
             if attempt < max_retries:
                 sleep_time = base_delay * attempt
                 if on_retry:
                     on_retry(sleep_time, attempt, max_retries)
                 time.sleep(sleep_time)
+            else:
+                print(f"[!] Attempt {attempt} failed. No more retries.")
 
-    # Returns None only if all retry attempts were exhausted
     return None
 
 def parse_ai_response(response): # parse the AI response into JSON
@@ -245,6 +241,7 @@ if __name__ == "__main__":
         "reputational_risk": False,
         "confidence": "high"
     }
+
 
     print("\n--- parse_ai_response tests ---")
     print(parse_ai_response('```json\n{"a": 1}\n```'))  # {'a': 1}
