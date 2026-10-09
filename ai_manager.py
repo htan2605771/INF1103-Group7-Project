@@ -67,13 +67,8 @@ def call_ai_api(prompt, max_retries=3):
             client = genai.Client(api_key=api_key)
 
             response = client.models.generate_content(
-<<<<<<< HEAD
                 model="gemini-3.8-flash",
                 contents=prompt, # sends the prompt to Gemini
-=======
-                model="gemini-2.5-flash",
-                contents=prompt,
->>>>>>> 586595e (fix: clean retry output in call_ai_api function)
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                     temperature=0.2
