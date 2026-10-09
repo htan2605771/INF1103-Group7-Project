@@ -260,6 +260,9 @@ def display_summary(complaints: list[dict]) -> None:
     print("=" * 80)
     print(f"Total Records: {len(complaints)}\n")
 
+def display_ai_retry(sleep_time, attempt, max_retries):
+    print(f"[!] AI call failed. Retrying in {sleep_time}s... (Attempt {attempt}/{max_retries})")
+
 # Test 
 if __name__ == "__main__":
     print("--- Running io_manager standalone test ---")

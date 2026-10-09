@@ -14,7 +14,7 @@ load_dotenv() # loads the .env file
 
 #Test for invalid API key
 api_key = os.getenv("GEMINI_API_KEY")
-api_key = "INVALID_KEY_TEST"
+#api_key = "INVALID_KEY_TEST"
 
 logger = logging.getLogger(__name__) # creates a logger for this file
 
@@ -55,8 +55,8 @@ def build_prompt(complaint): # build the prompt to send to the AI API
     return prompt
 
 
-def call_ai_api(prompt, max_retries=3):
-    if not api_key:
+def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the AI API and handle API failures
+    if not api_key: # checks if the API key is missing
         logger.error("Gemini API key is missing.")
         return None
 
@@ -81,7 +81,8 @@ def call_ai_api(prompt, max_retries=3):
         except (errors.APIError, Exception) as error:
             if attempt < max_retries:
                 sleep_time = base_delay * attempt
-                print(f"[!] Attempt {attempt} failed. Retrying in {sleep_time}s...")
+                if on_retry:
+                    on_retry(sleep_time, attempt, max_retries)
                 time.sleep(sleep_time)
             else:
                 print(f"[!] Attempt {attempt} failed. No more retries.")
@@ -186,16 +187,18 @@ def fallback_ai_output(complaint): # returns a default ai_output when the AI fai
     return fallback
 
 
-def get_ai_output(complaint):
+def get_ai_output(complaint, on_retry=None): # run a complaint through the complete AI processing flow
     prompt = build_prompt(complaint)
-    response = call_ai_api(prompt)  # Calls retry logic once (3 attempts inside)
-    ai_output = parse_ai_response(response)
-    
-    if validate_ai_response(ai_output):
-        return ai_output
-    else:
-        logger.error("AI validation failed after 3 attempts")
-        return fallback_ai_output(complaint)
+    for i in range(2): # tries the AI flow twice (1st attempt + 1 retry)
+        response = call_ai_api(prompt, on_retry=on_retry)
+        ai_output = parse_ai_response(response)
+        if validate_ai_response(ai_output): # if validate is successful return the ai_output
+            return ai_output
+        else:
+            logger.error(f"AI validation failed try number: {i+1}")
+    logger.error("AI failed after 2 attempts, using fallback output")
+    return fallback_ai_output(complaint) # returns the fallback ai_output
+
 
 if __name__ == "__main__":
     #AI HIGH RISK KEYWORD TEST

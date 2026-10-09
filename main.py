@@ -9,7 +9,7 @@ def process_complaint() -> None:
     complaint = io_manager.collect_complaint()
 
     # # 2. Get AI classification & sentiment analysis (falls back safely on failure)
-    ai_output = ai_manager.get_ai_output(complaint)
+    ai_output = ai_manager.get_ai_output(complaint, on_retry=io_manager.display_ai_retry)
 
     # # 3. Retrieve historical records for pattern checking (e.g., recent outlet issues)
     history = data_manager.filter_by_outlet_and_date(
