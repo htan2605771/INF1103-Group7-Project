@@ -55,41 +55,42 @@ def build_prompt(complaint): # build the prompt to send to the AI API
     return prompt
 
 
-def call_ai_api(prompt, max_retries=3): # sends the prompt to the AI API and handle API failures
-    if not api_key: # checks if the API key is missing
+def call_ai_api(prompt, max_retries=3):
+    if not api_key:
         logger.error("Gemini API key is missing.")
-        return None # stops the function without crashing the program
+        return None
 
     base_delay = 2
 
     for attempt in range(1, max_retries + 1):
-        try: # tries to call the Gemini API
-            client = genai.Client(api_key=api_key) # creates a Gemini client using the API key
+        try:
+            client = genai.Client(api_key=api_key)
 
             response = client.models.generate_content(
+<<<<<<< HEAD
                 model="gemini-3.8-flash",
                 contents=prompt, # sends the prompt to Gemini
+=======
+                model="gemini-2.5-flash",
+                contents=prompt,
+>>>>>>> 586595e (fix: clean retry output in call_ai_api function)
                 config=types.GenerateContentConfig(
-                    #forces a JSON response
-                    response_mime_type="application/json",  # ADDED: forces strict JSON response
-                    temperature=0.2 #Low temperature ensures deterministic, consistent output and reduces randomness for strict JSON parsing
+                    response_mime_type="application/json",
+                    temperature=0.2
                 )
             )
 
-            client.close() # closes the Gemini client
+            client.close()
+            return response.text
 
-            return response.text # returns Gemini's response as text
-
-        except (errors.APIError, Exception) as error: # handles API and network errors
-            logger.error(f"Gemini API attempt {attempt}/{max_retries} failed: {error}")
-            
-            # FIXED: Do NOT 'return None' here, wait and allow the loop to try again!
+        except (errors.APIError, Exception) as error:
             if attempt < max_retries:
                 sleep_time = base_delay * attempt
-                print(f"[!] AI call failed. Retrying in {sleep_time}s... (Attempt {attempt}/{max_retries})")
+                print(f"[!] Attempt {attempt} failed. Retrying in {sleep_time}s...")
                 time.sleep(sleep_time)
+            else:
+                print(f"[!] Attempt {attempt} failed. No more retries.")
 
-    # Returns None only if all retry attempts were exhausted
     return None
 
 def parse_ai_response(response): # parse the AI response into JSON
@@ -190,18 +191,16 @@ def fallback_ai_output(complaint): # returns a default ai_output when the AI fai
     return fallback
 
 
-def get_ai_output(complaint): # run a complaint through the complete AI processing flow
+def get_ai_output(complaint):
     prompt = build_prompt(complaint)
-    for i in range(2): # tries the AI flow twice (1st attempt + 1 retry)
-        response = call_ai_api(prompt)
-        ai_output = parse_ai_response(response)
-        if validate_ai_response(ai_output): # if validate is successful return the ai_output
-            return ai_output
-        else:
-            logger.error(f"AI validation failed try number: {i+1}")
-    logger.error("AI failed after 2 attempts, using fallback output")
-    return fallback_ai_output(complaint) # returns the fallback ai_output
-
+    response = call_ai_api(prompt)  # Calls retry logic once (3 attempts inside)
+    ai_output = parse_ai_response(response)
+    
+    if validate_ai_response(ai_output):
+        return ai_output
+    else:
+        logger.error("AI validation failed after 3 attempts")
+        return fallback_ai_output(complaint)
 
 if __name__ == "__main__":
     #AI HIGH RISK KEYWORD TEST
@@ -244,6 +243,7 @@ if __name__ == "__main__":
         "reputational_risk": False,
         "confidence": "high"
     }
+
 
     print("\n--- parse_ai_response tests ---")
     print(parse_ai_response('```json\n{"a": 1}\n```'))  # {'a': 1}
