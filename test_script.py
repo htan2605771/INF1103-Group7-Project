@@ -105,7 +105,6 @@ class Test02CalculateScore(unittest.TestCase):
 
         self.assertEqual(score, 100)
 
-
 class Test03AIManagerOffline(unittest.TestCase):
 
     @classmethod
@@ -152,34 +151,34 @@ class Test03AIManagerOffline(unittest.TestCase):
                 ai_manager.call_ai_api = original_call_ai_api
 
     def test_02_get_ai_output_api_failure_fallback(self):
-        """Test get_ai_output offline fallback when call_ai_api returns None."""
-        print("\n--- AI Failure Fallback Test ---")
-        original_call_ai_api = getattr(ai_manager, "call_ai_api", None)
+            """Test get_ai_output offline fallback when call_ai_api returns None."""
+            print("\n--- AI Failure Fallback Test ---")
+            original_call_ai_api = getattr(ai_manager, "call_ai_api", None)
 
-        def fake_call_ai_api_error(prompt, max_retries=3, on_retry=None):
-            return None
+            def fake_call_ai_api_error(prompt, max_retries=3, on_retry=None):
+                return None
 
-        try:
-            ai_manager.call_ai_api = fake_call_ai_api_error
-            complaint = {
-                "complaint_id": "CMP-0004",
-                "name": "Bob",
-                "email": "bob@example.com",
-                "phone": "83334444",
-                "outlet_id": "OUT-04",
-                "datetime": "2026-10-10T15:00:00",
-                "order_ref": "",
-                "category": "food_quality",
-                "description": "The soup was cold.",
-                "wants_followup": False
-            }
-            output = ai_manager.get_ai_output(complaint)
+            try:
+                ai_manager.call_ai_api = fake_call_ai_api_error
+                complaint = {
+                    "complaint_id": "CMP-0004",
+                    "name": "Bob",
+                    "email": "bob@example.com",
+                    "phone": "83334444",
+                    "outlet_id": "OUT-04",
+                    "datetime": "2026-10-10T15:00:00",
+                    "order_ref": "",
+                    "category": "food_quality",
+                    "description": "The soup was cold.",
+                    "wants_followup": False
+                }
+                output = ai_manager.get_ai_output(complaint)
 
-            self.assertEqual(output["confidence"], "low")
-            self.assertIn("key_details", output)
-        finally:
-            if original_call_ai_api is not None:
-                ai_manager.call_ai_api = original_call_ai_api
+                self.assertEqual(output["confidence"], "low")
+                self.assertIn("key_details", output)
+            finally:
+                if original_call_ai_api is not None:
+                    ai_manager.call_ai_api = original_call_ai_api
 
 
 if __name__ == "__main__":
