@@ -45,10 +45,16 @@ def load_complaints() -> list[dict]:
 
     try:
         with open(DATA_FILE, "r") as f:
-            return json.load(f)
+            data = json.load(f)
     except (json.JSONDecodeError, ValueError):
         logger.warning("%s is corrupt. Starting fresh.", DATA_FILE)
         return []
+
+    if not isinstance(data, list) or not all(isinstance(r, dict) for r in data):
+        logger.warning("%s does not contain a list of records. Starting fresh.", DATA_FILE)
+        return []
+
+    return data
 
 
 def filter_by_outlet_and_date(outlet_id: str, days: int) -> list[dict]:
