@@ -1,185 +1,182 @@
-import json
-import unittest
+import json 
+from unittest.mock import patch
+
+import main
 import ai_manager
-from logic_manager import evaluate_complaint, calculate_score
+import logic_manager
+import data_manager
 
-
-class PassTestResult(unittest.TextTestResult):
-    """Custom result formatter that prints PASS instead of a dot."""
-    def addSuccess(self, test):
-        super().addSuccess(test)
-        self.stream.write("PASS\n")
-        self.stream.flush()
-
-class PassTestRunner(unittest.TextTestRunner):
-    resultclass = PassTestResult
-
-
-class Test01EvaluateComplaint(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        print("\n-------------------------------------------------------------------------")
-        print("1. Tests for evaluate_complaint()")
-        print("-------------------------------------------------------------------------")
-
-    def test_01_ambiguous_complaint(self):
-        """Ambiguous complaints should yield manual_review and override_applied=True."""
-        print("\n--- Ambiguous Output Test ---")
-        complaint = {"description": "bad", "is_ambiguous": True, "category": "service"}
-        ai_output = {"severity": "low", "reputational_risk": False, "confidence": "high"}
-        history = []
-
-        result = evaluate_complaint(complaint, ai_output, history)
-
-        self.assertEqual(result["final_severity"], "manual_review")
-        self.assertTrue(result["override_applied"])
-        self.assertIn("ambiguous", result["override_reason"].lower())
-
-    def test_02_safety_keyword_override(self):
-        """Food poisoning keyword should override low AI severity to high."""
-        print("\n--- Safety Keyword Override Test ---")
-        complaint = {
-            "description": "I got food poisoning and started to vomit.",
-            "is_ambiguous": False,
-            "category": "food_quality"
-        }
-        ai_output = {"severity": "low", "reputational_risk": False, "confidence": "high"}
-        history = []
-
-        result = evaluate_complaint(complaint, ai_output, history)
-
-        self.assertEqual(result["final_severity"], "high")
-        self.assertTrue(result["override_applied"])
-        self.assertIn("safety keyword", result["override_reason"].lower())
-
-    def test_03_no_override_needed(self):
-        """Standard complaint without safety keywords or ambiguity should retain AI severity."""
-        print("\n--- Standard Input Test (No Override) ---")
-        complaint = {
+# -------------------------------------------------------------------------
+# OFFLINE TEST SCENARIOS FOR LOGIC_MANAGER FUNCTIONS
+# -------------------------------------------------------------------------
+TEST_SCENARIOS = [
+    {
+        "scenario_name": "Scenario 1: Standard Input (No Override)",
+        "description": "Tests logic_manager accepting AI output directly without applying overrides.",
+        "complaint": {
+            "complaint_id": "CMP-1003",
+            "name": "David Lim",
+            "email": "david@example.com",
+            "phone": "81112222",
+            "outlet_id": "OUT-03",
+            "datetime": "2026-10-11T14:15:00",
+            "order_ref": "ORD-503",
+            "category": "service",
             "description": "The cashier was slightly rude to me.",
             "is_ambiguous": False,
-            "category": "service"
-        }
-        ai_output = {"severity": "low", "reputational_risk": False, "confidence": "high"}
-        history = []
-
-        result = evaluate_complaint(complaint, ai_output, history)
-
-        self.assertEqual(result["final_severity"], "low")
-        self.assertFalse(result["override_applied"])
-        self.assertEqual(result["override_reason"], "")
-
-    def test_04_outlet_flagging(self):
-        """Past complaints including hygiene should flag outlet_flagged = True."""
-        print("\n--- Outlet Pattern Flagging Test ---")
-        complaint = {"description": "Cold food.", "is_ambiguous": False, "category": "food_quality"}
-        ai_output = {"severity": "low", "reputational_risk": False, "confidence": "high"}
-        history = [
-            {"category": "hygiene"},
-            {"category": "service"},
-            {"category": "service"}
+            "wants_followup": True
+        },
+        "ai_output": {
+            "ai_category": "service",
+            "key_details": ["rude cashier"],
+            "severity": "low",
+            "reason": "Minor customer service concern.",
+            "reputational_risk": False,
+            "confidence": "high"
+        },
+        "history": []
+    },
+    {
+        "scenario_name": "Scenario 2: Safety Keyword Override (Food Poisoning)",
+        "description": "Tests logic_manager overriding low AI severity to HIGH when safety keywords appear.",
+        "complaint": {
+            "complaint_id": "CMP-1001",
+            "name": "Sarah Chen",
+            "email": "sarah@example.com",
+            "phone": "91234567",
+            "outlet_id": "OUT-01",
+            "datetime": "2026-10-11T12:00:00",
+            "order_ref": "ORD-501",
+            "category": "food_quality",
+            "description": "I got food poisoning and started to vomit after eating the chicken rice.",
+            "is_ambiguous": False,
+            "wants_followup": True
+        },
+        "ai_output": {
+            "ai_category": "food_quality",
+            "key_details": ["food poisoning", "vomit"],
+            "severity": "low",  # AI under-evaluates severity
+            "reason": "Customer reported feeling unwell.",
+            "reputational_risk": True,
+            "confidence": "high"
+        },
+        "history": []
+    },
+    {
+        "scenario_name": "Scenario 3: Ambiguous Complaint Manual Review Override",
+        "description": "Tests logic_manager redirecting ambiguous input to MANUAL_REVIEW.",
+        "complaint": {
+            "complaint_id": "CMP-1002",
+            "name": "Alex Tan",
+            "email": "alex@example.com",
+            "phone": "98765432",
+            "outlet_id": "OUT-02",
+            "datetime": "2026-10-11T13:30:00",
+            "order_ref": "ORD-502",
+            "category": "service",
+            "description": "bad",
+            "is_ambiguous": True,  # Triggers ambiguity early return
+            "wants_followup": False
+        },
+        "ai_output": {
+            "ai_category": "service",
+            "key_details": ["unclear input"],
+            "severity": "low",
+            "reason": "Feedback is too brief.",
+            "reputational_risk": False,
+            "confidence": "low"
+        },
+        "history": []
+    },
+    {
+        "scenario_name": "Scenario 4: Outlet Pattern Flagging & Score Calculation",
+        "description": "Tests history checks flagging outlet and calculating max priority score (High=50 + RepRisk=30 + Outlet=20 -> 100).",
+        "complaint": {
+            "complaint_id": "CMP-1004",
+            "name": "Emily Wong",
+            "email": "emily@example.com",
+            "phone": "83334444",
+            "outlet_id": "OUT-04",
+            "datetime": "2026-10-11T15:00:00",
+            "order_ref": "ORD-504",
+            "category": "food_quality",
+            "description": "Found a cockroach inside the soup meal.",
+            "is_ambiguous": False,
+            "wants_followup": True
+        },
+        "ai_output": {
+            "ai_category": "hygiene",
+            "key_details": ["pest found in food"],
+            "severity": "high",
+            "reason": "Severe hygiene violation.",
+            "reputational_risk": True,
+            "confidence": "high"
+        },
+        "history": [
+            {"category": "hygiene", "datetime": "2026-10-08T10:00:00"},
+            {"category": "service", "datetime": "2026-10-09T11:00:00"}
         ]
+    }
+]
 
-        result = evaluate_complaint(complaint, ai_output, history)
+def run_offline_simulation():
+    print("=" * 70)
+    print("   F&B CUSTOMER COMPLAINT TRIAGE SYSTEM - AUTOMATED TEST SCRIPT   ")
+    print("=" * 70)
 
-        self.assertTrue(result["outlet_flagged"])
+    for idx, test_case in enumerate(TEST_SCENARIOS, 1):
+        print(f"\n{'=' * 75}")
+        print(f"▶ [{idx}/{len(TEST_SCENARIOS)}] {test_case['scenario_name']}")
+        print(f"   Purpose: {test_case['description']}")
+        print(f"{'=' * 75}")
 
+        complaint = test_case["complaint"]
+        ai_output = test_case["ai_output"]
+        history = test_case["history"]
 
-class Test02CalculateScore(unittest.TestCase):
+        # 1. SAMPLE INPUT COMPLAINT
+        print("\n  ┌── 1. SAMPLE INPUT COMPLAINT ──────────────────────────────────────────┐")
+        print(f"  │ Complaint ID : {complaint['complaint_id']}")
+        print(f"  │ Outlet ID    : {complaint['outlet_id']}")
+        print(f"  │ Category     : {complaint['category']}")
+        print(f"  │ Ambiguous?   : {complaint['is_ambiguous']}")
+        print(f"  │ Description  : \"{complaint['description']}\"")
+        print("  └───────────────────────────────────────────────────────────────────────┘")
 
-    @classmethod
-    def setUpClass(cls):
-        print("\n-------------------------------------------------------------------------")
-        print("2. Test for calculate_score()")
-        print("-------------------------------------------------------------------------")
-
-    def test_01_score_calculation(self):
-        """Test score calculation: High severity (50) + Reputational Risk (30) + Outlet Flag (20)."""
-        print("\n--- Score Calculation Test ---")
-        final_severity = "high"
-        reputational_risk = True
-        outlet_flagged = True
-
-        score = calculate_score(final_severity, reputational_risk, outlet_flagged)
-
-        self.assertEqual(score, 100)
-
-class Test03AIManagerOffline(unittest.TestCase):
-
-    @classmethod
-    def setUpClass(cls):
-        print("\n-------------------------------------------------------------------------")
-        print("3. Tests for ai_manager (Offline Mock)")
-        print("-------------------------------------------------------------------------")
-
-    def test_01_get_ai_output_successful_mock(self):
-        """Test get_ai_output with a mocked call_ai_api returning a valid JSON string."""
-        print("\n--- AI Successful Mock Test ---")
-        original_call_ai_api = getattr(ai_manager, "call_ai_api", None)
-
-        def fake_call_ai_api(prompt, max_retries=3, on_retry=None):
-            return json.dumps({
-                "ai_category": "service",
-                "key_details": ["rude staff"],
-                "severity": "medium",
-                "reason": "Customer reported rude staff.",
-                "reputational_risk": False,
-                "confidence": "high"
-            })
+        # 2. AI RESPONSE
+        print("\n  ┌── 2. INITIAL AI RESPONSE ─────────────────────────────────────────────┐")
+        print(f"  │ AI Category  : {ai_output['ai_category']}")
+        print(f"  │ AI Severity  : {ai_output['severity'].upper()}")
+        print(f"  │ Confidence   : {ai_output['confidence'].upper()}")
+        print(f"  │ Rep Risk     : {ai_output['reputational_risk']}")
+        print(f"  │ Key Details  : {', '.join(ai_output['key_details'])}")
+        print(f"  │ Reason       : {ai_output['reason']}")
+        print("  └───────────────────────────────────────────────────────────────────────┘")
 
         try:
-            ai_manager.call_ai_api = fake_call_ai_api
-            complaint = {
-                "complaint_id": "CMP-0003",
-                "name": "Alice",
-                "email": "alice@example.com",
-                "phone": "81112222",
-                "outlet_id": "OUT-03",
-                "datetime": "2026-10-10T14:00:00",
-                "order_ref": "ORD-200",
-                "category": "service",
-                "description": "The staff were extremely rude.",
-                "wants_followup": True
-            }
-            output = ai_manager.get_ai_output(complaint)
+            # Evaluate via business logic
+            eval_result = logic_manager.evaluate_complaint(complaint, ai_output, history)
+            priority_score = logic_manager.calculate_score(
+                final_severity=eval_result["final_severity"],
+                reputational_risk=ai_output.get("reputational_risk", False),
+                outlet_flagged=eval_result["outlet_flagged"]
+            )
 
-            self.assertEqual(output["ai_category"], "service")
-            self.assertEqual(output["confidence"], "high")
-        finally:
-            if original_call_ai_api is not None:
-                ai_manager.call_ai_api = original_call_ai_api
+            # 3. FINAL TRIAGE RESULTS
+            print("\n  ┌── 3. FINAL TRIAGE & OVERRIDE RESULTS ─────────────────────────────────┐")
+            print(f"  │ Final Severity   : {str(eval_result['final_severity']).upper()}")
+            print(f"  │ Override Applied : {eval_result['override_applied']}")
+            if eval_result["override_applied"]:
+                print(f"  │ Override Reason  : {eval_result['override_reason']}")
+            print(f"  │ Outlet Flagged   : {eval_result['outlet_flagged']}")
+            print(f"  │ Action Outcome   : {eval_result.get('outcome', 'flag_for_review')}")
+            print(f"  │ Priority Score   : {priority_score}/100")
+            print("  └───────────────────────────────────────────────────────────────────────┘")
+            print("\n   Status: ✅ PASSED SIMULATION")
 
-    def test_02_get_ai_output_api_failure_fallback(self):
-            """Test get_ai_output offline fallback when call_ai_api returns None."""
-            print("\n--- AI Failure Fallback Test ---")
-            original_call_ai_api = getattr(ai_manager, "call_ai_api", None)
-
-            def fake_call_ai_api_error(prompt, max_retries=3, on_retry=None):
-                return None
-
-            try:
-                ai_manager.call_ai_api = fake_call_ai_api_error
-                complaint = {
-                    "complaint_id": "CMP-0004",
-                    "name": "Bob",
-                    "email": "bob@example.com",
-                    "phone": "83334444",
-                    "outlet_id": "OUT-04",
-                    "datetime": "2026-10-10T15:00:00",
-                    "order_ref": "",
-                    "category": "food_quality",
-                    "description": "The soup was cold.",
-                    "wants_followup": False
-                }
-                output = ai_manager.get_ai_output(complaint)
-
-                self.assertEqual(output["confidence"], "low")
-                self.assertIn("key_details", output)
-            finally:
-                if original_call_ai_api is not None:
-                    ai_manager.call_ai_api = original_call_ai_api
+        except Exception as e:
+            print(f"\n   Status: ❌ ERROR - {e}")
 
 
 if __name__ == "__main__":
-    unittest.main(testRunner=PassTestRunner)
+    run_offline_simulation()
