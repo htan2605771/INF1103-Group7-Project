@@ -5,16 +5,11 @@ import time # used to implement retry delays
 
 from dotenv import load_dotenv # loads variables from the .env file (which is storing the API key)
 from google import genai # used to connect to the Gemini API
-from google.genai import errors # used to handle Gemini API errors
 from google.genai import types
-
-from logic_manager import get_final_result # used to configure the Gemini API request
 
 load_dotenv() # loads the .env file
 
-#Test for invalid API key
 api_key = os.getenv("GEMINI_API_KEY")
-#api_key = "INVALID_KEY_TEST"
 
 logger = logging.getLogger(__name__) # creates a logger for this file
 
@@ -67,7 +62,7 @@ def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the
             client = genai.Client(api_key=api_key)
 
             response = client.models.generate_content(
-                model="gemini-3.8-flash",
+                model="gemini-3.1-flash-lite",
                 contents=prompt, # sends the prompt to Gemini
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -78,14 +73,21 @@ def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the
             client.close()
             return response.text
 
-        except (errors.APIError, Exception) as error:
+        except Exception as error:
+            logger.error(
+                f"Gemini API attempt {attempt}/{max_retries} failed: "
+                f"{type(error).__name__}: {error}"
+            )
+
             if attempt < max_retries:
                 sleep_time = base_delay * attempt
+
                 if on_retry:
                     on_retry(sleep_time, attempt, max_retries)
+
                 time.sleep(sleep_time)
             else:
-                print(f"[!] Attempt {attempt} failed. No more retries.")
+                logger.error("Gemini API failed after all retry attempts.")
 
     return None
 
@@ -198,24 +200,6 @@ def get_ai_output(complaint: dict, on_retry=None) -> dict: # run a complaint thr
 
 
 if __name__ == "__main__":
-    #AI HIGH RISK KEYWORD TEST
-    # 1. Test complaint containing high-priority safety keywords
-    test_complaint = {
-        "description": "I had food poisoning and vomit after eating.",
-        "is_ambiguous": False
-    }
-    # 2. Simulated AI output returning severity "low"
-    simulated_ai_output = {
-        "severity": "low",
-        "reputational_risk": False
-    }
-    # History with fewer than 3 entries so pattern flag won't trigger
-    history = []
-    # Run
-    result = get_final_result(test_complaint, simulated_ai_output, history)
-    # Output the returned dictionary to verify
-    print("\n--- Final Result Output ---")
-    print(result)
 
     dummy_complaint = {
         "complaint_id": "CMP-0191",

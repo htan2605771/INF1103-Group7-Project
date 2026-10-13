@@ -148,13 +148,6 @@ def collect_complaint(): # dict
 
         print(f"{RED}[!] Complaint description cannot be empty. Please try again.{RESET}")
     
-    # Matrix check: Short or Ambiguous Text Submission
-    words = complaint_description.split()
-    is_ambiguous = len(complaint_description) < 10 or len(words) < 3
-
-    if is_ambiguous:
-        print("\n[i] Short or ambiguous text detected. Flagging for Manual Review...")
-
     # follow-up preference validation
     while True:
         follow_up = get_follow_up_preference()
@@ -179,8 +172,7 @@ def collect_complaint(): # dict
         "order_ref": order_reference,
         "category": complaint_category,
         "description": complaint_description,
-        "wants_followup": wants_followup,
-        "is_ambiguous": is_ambiguous
+        "wants_followup": wants_followup
     }
 
     return complaint
