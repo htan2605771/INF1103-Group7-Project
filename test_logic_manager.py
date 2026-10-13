@@ -2,11 +2,10 @@ from logic_manager import evaluate_complaint, calculate_score
 
 
 def test_01_ambiguous_complaint():
-    """Ambiguous complaints should yield manual_review and override_applied=True."""
+    """Ambiguous complaints keep the AI severity and get flag_for_review as the complaint outcome."""
     print("\n--- Ambiguous Output Test ---")
     complaint = {
         "description": "bad", 
-        "is_ambiguous": True, 
         "category": "service"
     }
     ai_output = {
@@ -18,9 +17,9 @@ def test_01_ambiguous_complaint():
 
     result = evaluate_complaint(complaint, ai_output, history)
 
-    assert result["final_severity"] == "manual_review"
-    assert result["override_applied"] is True
-    assert "ambiguous" in result["override_reason"].lower()
+    assert result["final_severity"] == "low"
+    assert result["override_applied"] is False
+    assert result["outcome"] == "flag_for_review"
     print("PASS")
 
 
@@ -29,7 +28,6 @@ def test_02_safety_keyword_override():
     print("\n--- Safety Keyword Override Test ---")
     complaint = {
         "description": "I got food poisoning and started to vomit.",
-        "is_ambiguous": False,
         "category": "service"
     }
     ai_output = {
@@ -52,7 +50,6 @@ def test_03_no_override_needed():
     print("\n--- Standard Input Test (No Override) ---")
     complaint = {
         "description": "The cashier was slightly rude to me during my visit.",
-        "is_ambiguous": False,
         "category": "service"
     }
     ai_output = {
@@ -75,7 +72,6 @@ def test_04_outlet_flagging():
     print("\n--- Outlet Pattern Flagging Test ---")
     complaint = {
         "description": "The cashier was slightly rude to me during my visit.",
-        "is_ambiguous": False,
         "category": "hygiene"
     }
     ai_output = {
