@@ -39,8 +39,7 @@ complaint = {
     "order_ref": str,           # optional, "" if not applicable
     "category": str,            # customer-selected: "food_quality" | "service" | "hygiene" | "billing" | "other"
     "description": str,         # free-text complaint
-    "wants_followup": bool,
-    "is_ambiguous": bool        # True if description is under 10 characters or under 3 words
+    "wants_followup": bool
 }
 ```
 
@@ -63,7 +62,7 @@ Created in `main.py` from `logic_manager.evaluate_complaint()` plus the score.
 
 ```python
 result = {
-    "final_severity": str,      # "low" | "medium" | "high" | "manual_review"
+    "final_severity": str,      # "low" | "medium" | "high"
     "outcome": str,             # "log" | "flag_for_review" | "escalate" | "route_to_manager"
     "outlet_flagged": bool,     # true if the repeat-complaint rule triggered
     "override_applied": bool,   # true if a business rule changed the AI's result
@@ -73,12 +72,12 @@ result = {
 ```
 
 ### Stored record
-`data_manager` saves one flat record per complaint by merging the three dictionaries: `{**complaint, **ai_output, **result}`. The key names do not overlap, so the record has all 23 fields. Any field added later by another module is stored automatically.
+`data_manager` saves one flat record per complaint by merging the three dictionaries: `{**complaint, **ai_output, **result}`. The key names do not overlap, so the record has all 22 fields. Any field added later by another module is stored automatically.
 
 ---
 
 ## io_manager.py
-Handles all communication with the user. All `print()` and `input()` calls belong here.
+Handles all communication with the user. All `print()` and `input()` calls belong here, apart from the main menu in `main.py`.
 
 ```python
 def collect_complaint() -> dict:
@@ -86,8 +85,7 @@ def collect_complaint() -> dict:
     Rejects and re-prompts on bad input: name, outlet ID and description must not
     be empty; email must match a valid format; phone must be 8 digits; incident
     datetime must be ISO format and not in the future; category must be one of
-    the five options; follow-up must be Yes or No. Sets is_ambiguous for short
-    descriptions. Returns a complaint dict."""
+    the five options; follow-up must be Yes or No. Returns a complaint dict."""
 
 def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
     """Print the complaint details, AI analysis and final triage decision."""
@@ -138,8 +136,8 @@ def fallback_ai_output(complaint: dict) -> dict:
 
 def get_ai_output(complaint: dict, on_retry=None) -> dict:
     """Top-level function: build_prompt -> call_ai_api -> parse_ai_response ->
-    validate_ai_response. Tries the whole flow twice, then returns the fallback
-    output. Always returns a valid ai_output dict."""
+    validate_ai_response. API failures are retried in call_ai_api; if the output is still
+    invalid, returns the fallback output. Always returns a valid ai_output dict."""
 ```
 
 ---
@@ -150,14 +148,13 @@ Applies the business rules to the AI-enriched complaint.
 ```python
 def evaluate_complaint(complaint: dict, ai_output: dict, history: list[dict]) -> dict:
     """Apply the business rules in order:
-    1. Ambiguous complaint -> final_severity 'manual_review', flagged for manual review.
-    2. Repeat-complaint pattern -> outlet_flagged via check_outlet_pattern(history + [complaint]).
-    3. Safety keyword in the description -> severity forced to 'high', override recorded.
-    4. Outcome chosen by determine_outcome().
+    1. Repeat-complaint pattern -> outlet_flagged via check_outlet_pattern(history + [complaint]).
+    2. Safety keyword in the description -> severity forced to 'high', override recorded.
+    3. Outcome chosen by determine_outcome().
     Returns final_severity, outcome, override_applied, override_reason, outlet_flagged."""
 
 def calculate_score(final_severity: str, reputational_risk: bool, outlet_flagged: bool) -> int:
-    """Priority score: low 10, medium 25, high 50, manual_review 15;
+    """Priority score: low 10, medium 25, high 50;
     +30 for reputational risk, +20 if the outlet is flagged."""
 
 def check_outlet_pattern(history: list[dict]) -> bool:
@@ -168,11 +165,12 @@ def check_outlet_pattern(history: list[dict]) -> bool:
 def determine_outcome(final_severity: str, ai_output: dict, outlet_flagged: bool, description: str) -> str:
     """First match wins:
     reputational risk -> 'route_to_manager'; outlet flagged -> 'route_to_manager';
-    low AI confidence or very short description -> 'flag_for_review';
-    high severity -> 'escalate'; otherwise 'log'."""
+    high severity -> 'escalate' (even if description is short);
+    low AI confidence or very short description (under 10 characters or 3 words) -> 'flag_for_review';
+    otherwise 'log'."""
 ```
 
-`SAFETY_KEYWORDS` is the list of food-safety terms (e.g. food poisoning, allergy, cockroach) scanned for in step 3. `get_final_result()` is an earlier stub kept in the file; `main.py` does not use it.
+`SAFETY_KEYWORDS` is the list of food-safety terms (e.g. food poisoning, allergy, cockroach) scanned for in step 2.
 
 ---
 
@@ -271,7 +269,7 @@ docker run --rm fnb-triage python test_script.py
 
 ## Ground rules
 1. Do not change a function's name, parameters or return type without telling the whole team.
-2. All `print()` calls live in `io_manager.py` and nowhere else.
+2. All `print()` calls live in `io_manager.py` (and the main menu in `main.py`) and nowhere else. Other managers use `logging` instead.
 3. Managers do not import each other; only `main.py` connects them.
 4. `ai_manager` contains no business rules and `logic_manager` makes no AI calls.
 5. Every module can be tested on its own; the team's `test_script.py` runs the logic and AI tests offline.
