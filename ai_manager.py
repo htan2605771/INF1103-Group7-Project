@@ -5,7 +5,6 @@ import time # used to implement retry delays
 
 from dotenv import load_dotenv # loads variables from the .env file (which is storing the API key)
 from google import genai # used to connect to the Gemini API
-from google.genai import errors # used to handle Gemini API errors
 from google.genai import types
 
 load_dotenv() # loads the .env file
@@ -76,14 +75,21 @@ def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the
             client.close()
             return response.text
 
-        except (errors.APIError, Exception) as error:
+        except Exception as error:
+            logger.error(
+                f"Gemini API attempt {attempt}/{max_retries} failed: "
+                f"{type(error).__name__}: {error}"
+            )
+
             if attempt < max_retries:
                 sleep_time = base_delay * attempt
+
                 if on_retry:
                     on_retry(sleep_time, attempt, max_retries)
+
                 time.sleep(sleep_time)
             else:
-                print(f"[!] Attempt {attempt} failed. No more retries.")
+                logger.error("Gemini API failed after all retry attempts.")
 
     return None
 
