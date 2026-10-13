@@ -7,6 +7,7 @@ from dotenv import load_dotenv # loads variables from the .env file (which is st
 from google import genai # used to connect to the Gemini API
 from google.genai import errors # used to handle Gemini API errors
 from google.genai import types
+from logic_manager import evaluate_complaint
 
 load_dotenv() # loads the .env file
 
