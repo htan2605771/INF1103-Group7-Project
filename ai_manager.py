@@ -66,7 +66,7 @@ def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the
             client = genai.Client(api_key=api_key)
 
             response = client.models.generate_content(
-                model="gemini-3.8-flash",
+                model="gemini-3.1-flash-lite",
                 contents=prompt, # sends the prompt to Gemini
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
