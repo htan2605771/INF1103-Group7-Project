@@ -6,21 +6,13 @@ SAFETY_KEYWORDS = [
 def evaluate_complaint(complaint: dict, ai_output: dict, history: list[dict]) -> dict:
     """
     Evaluates incoming complaint against business rules, overriding AI misclassifications
-    for safety risks or ambiguous input.
+    for safety risks and flagging short or ambiguous input for review.
     """
-    # 1. Handle Short or Ambiguous Text Submissions
-    if complaint.get("is_ambiguous", False):
-        return {
-            "final_severity": "manual_review",
-            "override_applied": True,
-            "override_reason": "Short or ambiguous text detected. Flagged for Manual Review.",
-            "outlet_flagged": False
-        }
 
-    # 2. Check for Pattern Flags (e.g., 2 or more complaints at same outlet in the last 7 days and at least 1 hygiene complaint)
+    # 1. Check for Pattern Flags (e.g., 2 or more complaints at same outlet in the last 7 days and at least 1 hygiene complaint)
     outlet_flagged = check_outlet_pattern(history + [complaint])
     
-    # 3. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
+    # 2. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
     description_lower = complaint.get("description", "").lower()
     has_safety_keyword = any(keyword in description_lower for keyword in SAFETY_KEYWORDS)
 
@@ -50,7 +42,6 @@ SEVERITY_WEIGHTS = {
     "low": 10,
     "medium": 25,
     "high": 50,
-    "manual_review": 15
 }
 
 def calculate_score(final_severity: str, reputational_risk: bool, outlet_flagged: bool) -> int:
@@ -84,14 +75,16 @@ def determine_outcome(final_severity: str, ai_output: dict, outlet_flagged: bool
     
     if outlet_flagged: # if outlet_flagged == True
         return "route_to_manager"
+
+    # high severity escalates even if the description is short or ambiguous (e.g. "food poisoning!!")
+    if final_severity == "high":
+        return "escalate"
     
     # description under 3 words or under 10 characters is treated as too short or ambiguous
     word_count = len(description.split()) # breaks the description text into words and counts the number of words in the description
     if ai_output["confidence"] == "low" or len(description) < 10 or word_count < 3:
         return "flag_for_review"
-
-    if final_severity == "high":
-        return "escalate"
+    
     return "log"
 
 
@@ -112,4 +105,5 @@ if __name__ == "__main__":
     print(determine_outcome("medium", {"reputational_risk": False, "confidence": "low"}, False, normal_description)) # flag_for_review
     print(determine_outcome("medium", ok_ai, False, "not good")) # flag_for_review
     print(determine_outcome("high", ok_ai, False, normal_description)) # escalate
+    print(determine_outcome("high", ok_ai, False, "food poisoning!!")) # escalate, high severity overrides short description 
     print(determine_outcome("medium", ok_ai, False, normal_description)) # log
