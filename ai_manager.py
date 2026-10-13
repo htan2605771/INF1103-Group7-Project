@@ -9,9 +9,7 @@ from google.genai import types
 
 load_dotenv() # loads the .env file
 
-#Test for invalid API key
 api_key = os.getenv("GEMINI_API_KEY")
-#api_key = "INVALID_KEY_TEST"
 
 logger = logging.getLogger(__name__) # creates a logger for this file
 
