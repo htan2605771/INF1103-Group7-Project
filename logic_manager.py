@@ -82,7 +82,7 @@ def determine_outcome(final_severity: str, ai_output: dict, outlet_flagged: bool
     
     # description under 3 words or under 10 characters is treated as too short or ambiguous
     word_count = len(description.split()) # breaks the description text into words and counts the number of words in the description
-    if ai_output["confidence"] == "low" or len(description) < 10 or word_count < 3:
+    if ai_output["confidence"] == "low" or len(description.strip()) < 10 or word_count < 3:
         return "flag_for_review"
     
     return "log"
