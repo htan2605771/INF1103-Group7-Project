@@ -1,3 +1,9 @@
+import logging
+
+
+logger = logging.getLogger(__name__)
+
+
 SAFETY_KEYWORDS = [
     "food poisoning", "hospital", "allergy", "allergic", "vomit", 
     "diarrhea", "rat", "cockroach", "glass", "metal", "insect", "bug"
@@ -26,7 +32,7 @@ def evaluate_complaint(complaint: dict, ai_output: dict, history: list[dict]) ->
         final_severity = "high"
         override_applied = True
         override_reason = "High-priority safety keyword detected (Auto-overridden to High)."
-        print("\n[!] High-priority food safety issue detected - Routing to Manager.")
+        logger.warning("[!] High-priority food safety issue detected - Routing to Manager.")
 
     outcome = determine_outcome(final_severity, ai_output, outlet_flagged, complaint["description"])
 
