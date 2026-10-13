@@ -13,7 +13,7 @@ api_key = os.getenv("GEMINI_API_KEY")
 
 logger = logging.getLogger(__name__) # creates a logger for this file
 
-def build_prompt(complaint): # build the prompt to send to the AI API
+def build_prompt(complaint: dict) -> str: # build the prompt to send to the AI API
     prompt = f"""
     
     You are an AI assistant for an F&B customer complaint triage system.
@@ -50,7 +50,7 @@ def build_prompt(complaint): # build the prompt to send to the AI API
     return prompt
 
 
-def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the AI API and handle API failures
+def call_ai_api(prompt: str, max_retries: int = 3, on_retry=None) -> str | None: # sends the prompt to the AI API and handle API failures
     if not api_key: # checks if the API key is missing
         logger.error("Gemini API key is missing.")
         return None
@@ -91,7 +91,7 @@ def call_ai_api(prompt, max_retries=3, on_retry=None): # sends the prompt to the
 
     return None
 
-def parse_ai_response(response): # parse the AI response into JSON
+def parse_ai_response(response: str | None) -> dict | None: # parse the AI response into JSON
     if not response: # checks whether the response is empty or None
         logger.error("AI response is empty, there is no response to parse.")
         return None
@@ -116,7 +116,7 @@ def parse_ai_response(response): # parse the AI response into JSON
             return None
 
 
-def ai_output_schema(): # returns the expected ai_output fields, data types and allowable values
+def ai_output_schema() -> dict: # returns the expected ai_output fields, data types and allowable values
     schema = {
         "ai_category": [str, ("food_quality", "service", "hygiene", "billing", "other")],
         "key_details": [list, None],
@@ -128,7 +128,7 @@ def ai_output_schema(): # returns the expected ai_output fields, data types and 
     return schema
 
 
-def check_schema_fields(ai_output): # checks if each schema field exists in the ai_output, has the correct data type and allowed value
+def check_schema_fields(ai_output: dict) -> bool: # checks if each schema field exists in the ai_output, has the correct data type and allowed value
     schema = ai_output_schema()
     for field, rule in schema.items(): # field = key, rule = values. e.g. field = severity, rule = [str, ("low", "medium", "high")]
         if field not in ai_output: # if a schema field is missing in ai_output, log error
@@ -148,7 +148,7 @@ def check_schema_fields(ai_output): # checks if each schema field exists in the 
     return True
 
 
-def check_additional_rules(ai_output): # checks whether key details items all are of type string and reason is not empty
+def check_additional_rules(ai_output: dict) -> bool: # checks whether key details items all are of type string and reason is not empty
     for item in ai_output["key_details"]:
         if not isinstance(item, str): # if item data type is not string, log error
             logger.error(f"key_details item is not a string: {item}")
@@ -163,7 +163,7 @@ def check_additional_rules(ai_output): # checks whether key details items all ar
     return True
 
 
-def validate_ai_response(ai_output): # validate that the AI output follows the required schema
+def validate_ai_response(ai_output: dict | None) -> bool: # validate that the AI output follows the required schema
     if not isinstance(ai_output, dict): # rejects None or non-dictionary ai_output from a failed parse
         logger.error("ai_output data type is not a dictionary")
         return False
@@ -177,7 +177,7 @@ def validate_ai_response(ai_output): # validate that the AI output follows the r
     return True
 
 
-def fallback_ai_output(complaint): # returns a default ai_output when the AI fails, flagged for manual review
+def fallback_ai_output(complaint: dict) -> dict: # returns a default ai_output when the AI fails, flagged for manual review
     fallback = {
         "ai_category": complaint["category"], # uses customer-selected category as a fallback for ai_category
         "key_details": [],
@@ -189,16 +189,13 @@ def fallback_ai_output(complaint): # returns a default ai_output when the AI fai
     return fallback
 
 
-def get_ai_output(complaint, on_retry=None): # run a complaint through the complete AI processing flow
+def get_ai_output(complaint: dict, on_retry=None) -> dict: # run a complaint through the complete AI processing flow
     prompt = build_prompt(complaint)
-    for i in range(2): # tries the AI flow twice (1st attempt + 1 retry)
-        response = call_ai_api(prompt, on_retry=on_retry)
-        ai_output = parse_ai_response(response)
-        if validate_ai_response(ai_output): # if validate is successful return the ai_output
-            return ai_output
-        else:
-            logger.error(f"AI validation failed try number: {i+1}")
-    logger.error("AI failed after 2 attempts, using fallback output")
+    response = call_ai_api(prompt, on_retry=on_retry)
+    ai_output = parse_ai_response(response)
+    if validate_ai_response(ai_output): # if validate is successful return the ai_output
+        return ai_output
+    logger.error("AI output validation failed, using fallback ai_output.")
     return fallback_ai_output(complaint) # returns the fallback ai_output
 
 

@@ -23,7 +23,6 @@ TEST_SCENARIOS = [
             "order_ref": "ORD-503",
             "category": "service",
             "description": "The cashier was slightly rude to me.",
-            "is_ambiguous": False,
             "wants_followup": True
         },
         "ai_output": {
@@ -49,7 +48,6 @@ TEST_SCENARIOS = [
             "order_ref": "ORD-501",
             "category": "food_quality",
             "description": "I got food poisoning and started to vomit after eating the chicken rice.",
-            "is_ambiguous": False,
             "wants_followup": True
         },
         "ai_output": {
@@ -63,8 +61,8 @@ TEST_SCENARIOS = [
         "history": []
     },
     {
-        "scenario_name": "Scenario 3: Ambiguous Complaint Manual Review Override",
-        "description": "Tests logic_manager redirecting ambiguous input to MANUAL_REVIEW.",
+        "scenario_name": "Scenario 3: Short/Ambiguous Complaint Flagged for Review",
+        "description": "Tests logic_manager keeping the AI severity and setting the outcome for ambiguous input to FLAG_FOR_REVIEW.",
         "complaint": {
             "complaint_id": "CMP-1002",
             "name": "Alex Tan",
@@ -75,7 +73,6 @@ TEST_SCENARIOS = [
             "order_ref": "ORD-502",
             "category": "service",
             "description": "bad",
-            "is_ambiguous": True,  # Triggers ambiguity early return
             "wants_followup": False
         },
         "ai_output": {
@@ -101,7 +98,6 @@ TEST_SCENARIOS = [
             "order_ref": "ORD-504",
             "category": "food_quality",
             "description": "Found a cockroach inside the soup meal.",
-            "is_ambiguous": False,
             "wants_followup": True
         },
         "ai_output": {
@@ -139,7 +135,6 @@ def run_offline_simulation():
         print(f"  │ Complaint ID : {complaint['complaint_id']}")
         print(f"  │ Outlet ID    : {complaint['outlet_id']}")
         print(f"  │ Category     : {complaint['category']}")
-        print(f"  │ Ambiguous?   : {complaint['is_ambiguous']}")
         print(f"  │ Description  : \"{complaint['description']}\"")
         print("  └───────────────────────────────────────────────────────────────────────┘")
 
@@ -169,7 +164,7 @@ def run_offline_simulation():
             if eval_result["override_applied"]:
                 print(f"  │ Override Reason  : {eval_result['override_reason']}")
             print(f"  │ Outlet Flagged   : {eval_result['outlet_flagged']}")
-            print(f"  │ Action Outcome   : {eval_result.get('outcome', 'flag_for_review')}")
+            print(f"  │ Action Outcome   : {eval_result['outcome']}")
             print(f"  │ Priority Score   : {priority_score}/100")
             print("  └───────────────────────────────────────────────────────────────────────┘")
             print("\n   Status: ✅ PASSED SIMULATION")
