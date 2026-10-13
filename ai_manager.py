@@ -7,7 +7,6 @@ from dotenv import load_dotenv # loads variables from the .env file (which is st
 from google import genai # used to connect to the Gemini API
 from google.genai import errors # used to handle Gemini API errors
 from google.genai import types
-from logic_manager import evaluate_complaint
 
 load_dotenv() # loads the .env file
 
@@ -200,23 +199,6 @@ def get_ai_output(complaint, on_retry=None): # run a complaint through the compl
 
 
 if __name__ == "__main__":
-    #AI HIGH RISK KEYWORD TEST
-    # 1. Test complaint containing high-priority safety keywords
-    test_complaint = {
-        "description": "I had food poisoning and vomit after eating.",
-    }
-    # 2. Simulated AI output returning severity "low"
-    simulated_ai_output = {
-        "severity": "low",
-        "reputational_risk": False
-    }
-    # History with fewer than 3 entries so pattern flag won't trigger
-    history = []
-    # Run (using evaluate_complaint from logic_manager instead)
-    result = evaluate_complaint(test_complaint, simulated_ai_output, history)
-    # Output the returned dictionary to verify
-    print("\n--- Final Result Output ---")
-    print(result)
 
     dummy_complaint = {
         "complaint_id": "CMP-0191",
