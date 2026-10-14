@@ -77,11 +77,11 @@ TEST_SCENARIOS = [
         },
         "ai_output": {
             "ai_category": "service",
-            "key_details": ["unclear input"],
+            "key_details": ["bad service"],
             "severity": "low",
-            "reason": "Feedback is too brief.",
+            "reason": "Customer gave complete and clear feedback.",
             "reputational_risk": False,
-            "confidence": "low"
+            "confidence": "high" 
         },
         "history": []
     },
