@@ -1,8 +1,9 @@
 import io_manager
+from io_manager import ComplaintCollector, IOManager
 import ai_manager
 import logic_manager
+from logic_manager import ComplaintEvaluator
 import data_manager
-from io_manager import ComplaintCollector, IOManager
 
 def process_complaint() -> None:
     """Executes the end-to-end triage pipeline for a single complaint."""
@@ -19,9 +20,10 @@ def process_complaint() -> None:
     )
 
     # # 4. Evaluate business rules and determine final triage severity/action
-    evaluation = logic_manager.evaluate_complaint(complaint, ai_output, history)
+    evaluator = ComplaintEvaluator()  # Instantiate the class
+    evaluation = evaluator.evaluate_complaint(complaint, ai_output, history)
     
-    score = logic_manager.calculate_score(
+    score = evaluator.calculate_score(
         evaluation["final_severity"],
         ai_output.get("reputational_risk", False),
         evaluation["outlet_flagged"]

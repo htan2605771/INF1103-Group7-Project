@@ -1,4 +1,7 @@
-from logic_manager import evaluate_complaint, calculate_score
+from logic_manager import ComplaintEvaluator
+
+# Instantiate the evaluator class for testing
+evaluator = ComplaintEvaluator()
 
 
 def test_01_ambiguous_complaint():
@@ -15,7 +18,7 @@ def test_01_ambiguous_complaint():
     }
     history = []
 
-    result = evaluate_complaint(complaint, ai_output, history)
+    result = evaluator.evaluate_complaint(complaint, ai_output, history)
 
     assert result["final_severity"] == "low"
     assert result["override_applied"] is False
@@ -37,7 +40,7 @@ def test_02_safety_keyword_override():
     }
     history = []
 
-    result = evaluate_complaint(complaint, ai_output, history)
+    result = evaluator.evaluate_complaint(complaint, ai_output, history)
 
     assert result["final_severity"] == "high"
     assert result["override_applied"] is True
@@ -59,7 +62,7 @@ def test_03_no_override_needed():
     }
     history = []
 
-    result = evaluate_complaint(complaint, ai_output, history)
+    result = evaluator.evaluate_complaint(complaint, ai_output, history)
 
     assert result["final_severity"] == "low"
     assert result["override_applied"] is False
@@ -82,7 +85,7 @@ def test_04_outlet_flagging():
     # history + [complaint] length will be 2, with at least one 'hygiene' category
     history = [{"category": "service"}]
 
-    result = evaluate_complaint(complaint, ai_output, history)
+    result = evaluator.evaluate_complaint(complaint, ai_output, history)
 
     assert result["outlet_flagged"] is True
     print("PASS")
@@ -95,7 +98,7 @@ def test_05_score_calculation():
     reputational_risk = True
     outlet_flagged = True
 
-    score = calculate_score(final_severity, reputational_risk, outlet_flagged)
+    score = evaluator.calculate_score(final_severity, reputational_risk, outlet_flagged)
 
     assert score == 100
     print("PASS")
