@@ -4,6 +4,7 @@ import ai_manager
 import logic_manager
 from logic_manager import ComplaintEvaluator
 import data_manager
+from data_manager import ComplaintDataManager
 
 def process_complaint() -> None:
     """Executes the end-to-end triage pipeline for a single complaint."""
@@ -15,7 +16,9 @@ def process_complaint() -> None:
     ai_output = ai_manager.get_ai_output(complaint, on_retry=IOManager.display_ai_retry)
 
     # # 3. Retrieve historical records for pattern checking (e.g., recent outlet issues)
-    history = data_manager.filter_by_outlet_and_date(
+    # Instantiate data manager
+    db_manager = ComplaintDataManager()
+    history = db_manager.filter_by_outlet_and_date(
         complaint["outlet_id"], days=7
     )
 
@@ -36,7 +39,7 @@ def process_complaint() -> None:
     }
     
     # # 5. Persist complete record (complaint + ai_output + result)
-    data_manager.save_complaint(complaint, ai_output, result)
+    db_manager.save_complaint(complaint, ai_output, result)
 
     # 6. Output the final decision back to the user
     IOManager.display_result(complaint, ai_output, result)
@@ -48,7 +51,8 @@ def main() -> None:
     print("=" * 55)
 
     # Load existing complaint database on startup
-    existing_records = data_manager.load_complaints()
+    db_manager = ComplaintDataManager()
+    existing_records = db_manager.load_complaints()
     print(f"Loaded {len(existing_records)} existing complaint record(s).\n")
 
     while True:
@@ -63,7 +67,7 @@ def main() -> None:
             process_complaint()
         elif choice == "2":
             # Refresh and view stored records
-            records = data_manager.load_complaints()
+            records = db_manager.load_complaints()
             IOManager.display_summary(records)
         elif choice == "3":
             print("\nExiting F&B Complaint Triage System. Goodbye!")
