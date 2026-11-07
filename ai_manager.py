@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os # used to access .env variables
 import logging # used to record API errors
 import json

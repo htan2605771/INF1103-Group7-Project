@@ -2,14 +2,16 @@ import io_manager
 import ai_manager
 import logic_manager
 import data_manager
+from io_manager import ComplaintCollector, IOManager
 
 def process_complaint() -> None:
     """Executes the end-to-end triage pipeline for a single complaint."""
     # Collect and validate user input from terminal
-    complaint = io_manager.collect_complaint()
+    collector = ComplaintCollector()
+    complaint = collector.collect_complaint()
 
     # # 2. Get AI classification & sentiment analysis (falls back safely on failure)
-    ai_output = ai_manager.get_ai_output(complaint, on_retry=io_manager.display_ai_retry)
+    ai_output = ai_manager.get_ai_output(complaint, on_retry=IOManager.display_ai_retry)
 
     # # 3. Retrieve historical records for pattern checking (e.g., recent outlet issues)
     history = data_manager.filter_by_outlet_and_date(
@@ -35,7 +37,7 @@ def process_complaint() -> None:
     data_manager.save_complaint(complaint, ai_output, result)
 
     # 6. Output the final decision back to the user
-    io_manager.display_result(complaint, ai_output, result)
+    IOManager.display_result(complaint, ai_output, result)
 
 def main() -> None:
     """Loads stored records on startup and runs the main interactive loop."""
@@ -60,7 +62,7 @@ def main() -> None:
         elif choice == "2":
             # Refresh and view stored records
             records = data_manager.load_complaints()
-            io_manager.display_summary(records)
+            IOManager.display_summary(records)
         elif choice == "3":
             print("\nExiting F&B Complaint Triage System. Goodbye!")
             break
