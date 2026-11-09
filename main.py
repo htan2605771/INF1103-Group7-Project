@@ -1,19 +1,20 @@
 import io_manager
 from io_manager import ComplaintCollector, IOManager
-import ai_manager
 import logic_manager
 from logic_manager import ComplaintEvaluator
 import data_manager
 from data_manager import ComplaintDataManager
+from ai_manager.ai_manager import AIManager
+from ai_manager.gemini_client import GeminiClient
 
-def process_complaint() -> None:
+def process_complaint(ai: AIManager) -> None:
     """Executes the end-to-end triage pipeline for a single complaint."""
     # Collect and validate user input from terminal
     collector = ComplaintCollector()
     complaint = collector.collect_complaint()
 
     # # 2. Get AI classification & sentiment analysis (falls back safely on failure)
-    ai_output = ai_manager.get_ai_output(complaint, on_retry=IOManager.display_ai_retry)
+    ai_output = ai.get_ai_output(complaint, on_retry=IOManager.display_ai_retry)
 
     # # 3. Retrieve historical records for pattern checking (e.g., recent outlet issues)
     # Instantiate data manager
@@ -55,6 +56,8 @@ def main() -> None:
     existing_records = db_manager.load_complaints()
     print(f"Loaded {len(existing_records)} existing complaint record(s).\n")
 
+    ai = AIManager(GeminiClient())  # Initialize AIManager with GeminiClient
+
     while True:
         print("\n--- Main Menu ---")
         print("1. Submit new complaint")
@@ -64,7 +67,7 @@ def main() -> None:
         choice = input("Select an option (1-3): ").strip()
 
         if choice == "1":
-            process_complaint()
+            process_complaint(ai)
         elif choice == "2":
             # Refresh and view stored records
             records = db_manager.load_complaints()
