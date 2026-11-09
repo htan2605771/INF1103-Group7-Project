@@ -212,7 +212,7 @@ class IOManager:
         print(f"Total Records: {len(complaints)}\n")
 
     @staticmethod
-    def display_ai_retry(sleep_time, attempt, max_retries):
+    def display_ai_retry(sleep_time, attempt, max_retries) -> None:
         print(f"[!] AI call failed. Retrying in {sleep_time}s... (Attempt {attempt}/{max_retries})")
 
 
