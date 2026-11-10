@@ -3,7 +3,7 @@ from .summary_display import IOSummaryDisplay
 from .retry_display import IORetryDisplay
 
 class IOManager:
-    """Handles formatting and printing outputs, summaries, and retry alerts."""
+    """Coordinates complaint result, summary, and AI retry displays."""
 
     @staticmethod
     def display_result(complaint: dict, ai_output: dict, result: dict) -> None:
@@ -18,5 +18,7 @@ class IOManager:
         summary_display.display_summary(complaints)
 
     @staticmethod
-    def display_ai_retry(sleep_time, attempt, max_retries) -> None:
-        print(f"[!] AI call failed. Retrying in {sleep_time}s... (Attempt {attempt}/{max_retries})")
+    def display_ai_retry(sleep_time: int | float, attempt: int, max_retries: int) -> None:
+        """Displays AI retry notifications using IORetryDisplay."""
+        retry_display = IORetryDisplay()
+        retry_display.display_ai_retry(sleep_time, attempt, max_retries)
