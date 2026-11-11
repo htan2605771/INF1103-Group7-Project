@@ -9,8 +9,13 @@ class ComplaintDataManager:
     """Manages persistent storage, loading, filtering, and ID generation for complaints."""
 
     def __init__(self, data_file: str = "complaints_data.json"):
-        self.data_file = data_file
-        self.logger = logging.getLogger(__name__)
+        self._data_file = data_file
+        self._logger = logging.getLogger(__name__)
+
+    @property
+    def data_file(self) -> str:
+        """Path of the JSON file (read-only)."""
+        return self._data_file
 
     def generate_complaint_id(self, records: list[dict]) -> str:
         """Return the next complaint ID (CMP-0001, CMP-0002, ...) based on stored records."""
