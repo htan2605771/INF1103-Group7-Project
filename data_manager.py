@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import re
 from datetime import datetime, timedelta
 
@@ -38,38 +37,41 @@ class ComplaintDataManager:
             json.dump(records, f, indent=2)
 
     def load_complaints(self) -> list[dict]:
-        """Load all stored complaint records on startup.
-        Return empty list if file is missing or corrupt."""
-        if not os.path.exists(self.data_file):
-            return []
-
+        """Load all stored complaint records.
+        Returns an empty list if the file is missing, unreadable, corrupt or not a list of records."""
         try:
-            with open(self.data_file, "r") as f:
+            with open(self._data_file, "r") as f:
                 data = json.load(f)
+        except FileNotFoundError:
+            return []
         except (json.JSONDecodeError, ValueError):
-            self.logger.warning("%s is corrupt. Starting fresh.", self.data_file)
+            self._logger.warning("%s is corrupt. Starting fresh.", self._data_file)
             return []
-
+        except OSError as error:
+            self._logger.warning("Could not read %s: %s. Starting fresh.", self._data_file, error)
+            return []
+ 
         if not isinstance(data, list) or not all(isinstance(r, dict) for r in data):
-            self.logger.warning("%s does not contain a list of records. Starting fresh.", self.data_file)
+            self._logger.warning("%s does not contain a list of records. Starting fresh.", self._data_file)
             return []
-
+ 
         return data
+
 
     def filter_by_outlet_and_date(self, outlet_id: str, days: int) -> list[dict]:
         """Return all complaint records for a given outlet within the last `days` days."""
-        records = self.load_complaints()
         cutoff = datetime.now() - timedelta(days=days)
         filtered = []
-
-        for r in records:
+ 
+        for r in self.load_complaints():
             if r.get("outlet_id") != outlet_id:
                 continue
             try:
                 record_dt = datetime.strptime(r.get("datetime", ""), "%Y-%m-%dT%H:%M:%S")
-                if record_dt >= cutoff:
-                    filtered.append(r)
-            except ValueError:
-                continue
-
+            except (ValueError, TypeError):
+                continue  # missing or badly formatted datetime: skip this record
+            if record_dt >= cutoff:
+                filtered.append(r)
+ 
         return filtered
+ 
