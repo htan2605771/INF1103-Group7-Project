@@ -21,20 +21,24 @@ class ComplaintDataManager:
                 highest = max(highest, int(match.group(1)))
         return f"CMP-{highest + 1:04d}"
 
-    def save_complaint(self, complaint: dict, ai_output: dict, result: dict) -> None:
+    def save_complaint(self, complaint: dict, ai_output: dict, result: dict) -> bool:
         """Merge complaint + ai_output + result into one record and append to storage.
         If the complaint has no ID yet, one is generated and written back onto the
-        complaint dict so later steps (e.g. display_result) can show it."""
+        complaint dict so later steps (e.g. display_result) can show it.
+        Returns True if saved, False if storage could not be written (the error is logged, not raised)."""
         records = self.load_complaints()
-
+ 
         if not complaint.get("complaint_id"):
             complaint["complaint_id"] = self.generate_complaint_id(records)
-
-        record = {**complaint, **ai_output, **result}
-        records.append(record)
-
-        with open(self.data_file, "w") as f:
-            json.dump(records, f, indent=2)
+ 
+        records.append({**complaint, **ai_output, **result})
+ 
+        try:
+            self._write_all(records)
+        except OSError as error:
+            self._logger.error("Could not save complaint %s: %s", complaint["complaint_id"], error)
+            return False
+        return True
 
     def load_complaints(self) -> list[dict]:
         """Load all stored complaint records.
