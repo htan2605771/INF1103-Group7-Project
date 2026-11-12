@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Customer Feedback | ServeTriage AI</title>
+    <!-- Pico.css Lightweight Framework -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <main class="container" style="max-width: 700px; padding-top: 2.5rem; padding-bottom: 3rem;">
+        <!-- Top Back Navigation Bar -->
+        <nav style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <ul>
+                <li>
+                    <a href="/" class="secondary" style="font-size: 0.85rem; text-decoration: underline; color: #718096; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        &larr; Back to Home
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+         <!-- Top Header -->
+        <header style="margin-bottom: 2rem; border: none; padding: 0;">
+            <h1 style="font-size: 2.1rem; font-weight: 800; margin-bottom: 0.35rem;">Customer Feedback Portal</h1>
+            <p style="color: #a0aec0; font-size: 1rem; margin: 0;">
+                We value your experience. Share your feedback below so our team can immediately review and assist you.
+            </p>
+        </header>
+
+        <form action="/submit" method="POST">
+
+            <!-- SECTION 1: Customer Information & Preferences -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #63b3ed; margin-bottom: 0.25rem;">1. Customer Information</h3>
+                <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem;">Enter your contact details and communication preferences.</p>
+            </div>
+
+            <div class="grid">
+                <label>Name
+                    <input type="text" name="name" required placeholder="John Doe">
+                </label>
+                <label>Email Address
+                    <input type="email" name="email" required placeholder="user@domain.com">
+                </label>
+            </div>
+
+            <div class="grid">
+                <label>Phone Number
+                    <input type="tel" name="phone" pattern="^\d{8}$" required placeholder="12345678">
+                </label>
+                <label>Would you like a follow-up?
+                    <select name="wants_followup" required>
+                        <option value="" disabled selected>Select preference...</option>
+                        <option value="yes">Yes, please contact me</option>
+                        <option value="no">No, feedback only</option>
+                    </select>
+                </label>
+            </div>
+
+            <!-- SECTION 2: Incident Details -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #63b3ed; margin-bottom: 0.25rem;">2. Incident Details</h3>
+                <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem;">Provide specific details about your dining experience for AI triage processing.</p>
+            </div>
+
+            <div class="grid">
+                <label>Date & Time
+                    <input type="datetime-local" name="incident_datetime" id="incident_datetime" required>
+                </label>
+                <label>Select Outlet
+                    <select name="outlet_id" required>
+                        <option value="" disabled selected>Select outlet...</option>
+                        {% for outlet in config.outlets %}
+                            <option value="{{ outlet.outlet_id }}">{{ outlet.store_name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            </div>
+
+            <label>Complaint Category
+                <select name="category" required>
+                    <option value="" disabled selected>Select category...</option>
+                    <option value="food quality">Food Quality</option>
+                    <option value="service">Service</option>
+                    <option value="hygiene">Hygiene</option>
+                    <option value="billing">Billing</option>
+                    <option value="other">Other</option>
+                </select>
+            </label>
+
+            <label style="margin-bottom: 2rem;">Complaint Description
+                <textarea name="description" rows="4" required placeholder="Describe what went wrong..."></textarea>
+            </label>
+
+            <button type="submit" style="font-weight: 600; width: 100%;">
+                Submit Feedback
+            </button>
+        </form>
+    </main>
+
+<script>
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('incident_datetime').max = now.toISOString().slice(0, 16);
+</script>
+</body>
+</html>

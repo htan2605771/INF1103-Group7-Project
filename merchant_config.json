@@ -1,0 +1,10 @@
+{
+  "business_name": "Changi Culinary Group Pte Ltd",
+  "email": "owner@restaurant.com",
+  "outlets": [
+    { "outlet_id": "OUT-001", "store_name": "Jewel Changi" },
+    { "outlet_id": "OUT-002", "store_name": "Tampines Mall" },
+    { "outlet_id": "OUT-003", "store_name": "Bugis Junction" },
+    { "outlet_id": "OUT-004", "store_name": "Suntec City" }
+  ]
+}

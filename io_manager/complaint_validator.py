@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 import re # used to check whether a text matches a specific pattern
 
 class IOComplaintValidator:
@@ -37,18 +37,25 @@ class IOComplaintValidator:
         return self._validate_non_empty(outlet_id)
 
     def validate_incident_datetime(self, incident_datetime: str) -> str:
+        if not incident_datetime:
+            return "invalid_format"
+            
         try:
-            incident_datetime_object = datetime.strptime(
-                incident_datetime,
-                "%Y-%m-%dT%H:%M:%S"
-            )
-
-            if incident_datetime_object > datetime.now():
+            # Parse the datetime sent by the browser
+            incident_datetime_object = datetime.fromisoformat(incident_datetime)
+            
+            # Define local timezone offset Singapore is UTC+8
+            local_tz = timezone(timedelta(hours=8))
+            
+            # Get the exact current time in THAT same timezone
+            local_now = datetime.now(local_tz).replace(tzinfo=None) # Strip tzinfo for naive comparison if needed, or make both aware
+            
+            if incident_datetime_object > local_now:
                 return "future"
-
+                
             return "valid"
-
-        except ValueError:
+            
+        except (ValueError, TypeError):
             return "invalid_format"
 
     def validate_complaint_category(self, complaint_category: str) -> bool:
