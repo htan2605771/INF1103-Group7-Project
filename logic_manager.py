@@ -22,7 +22,8 @@ class ComplaintEvaluator:
         for safety risks and flagging short or ambiguous input for review.
         """
         # 1. Check for Pattern Flags (e.g., 2 or more complaints at same outlet in the last 7 days and at least 1 hygiene complaint)
-        outlet_flagged = self.check_outlet_pattern(history + [complaint])
+        full_history = history + [complaint]
+        outlet_flagged = self.check_outlet_pattern(full_history, complaint.get("outlet_id"))
         
         # 2. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
         description_lower = complaint.get("description", "").lower()
@@ -61,14 +62,22 @@ class ComplaintEvaluator:
 
         return score
 
-    def check_outlet_pattern(self, history: list[dict]) -> bool:
-        """Check if outlet has 2 or more complaints in the last 7 days and at least one complaint is hygiene."""
-        if len(history) < 2:
+    def check_outlet_pattern(self, history: list[dict], current_outlet_id: str) -> bool:
+        """Check if a specific outlet has 2 or more complaints and at least one is hygiene."""
+        # Filter history strictly for this specific outlet
+        outlet_records = [r for r in history if r.get("outlet_id") == current_outlet_id]
+        
+        # Must have 2 or more complaints for this outlet
+        if len(outlet_records) < 2:
             return False
-        for record in history:
-            if record["category"] == "hygiene" or record.get("ai_category") == "hygiene":
-                return True
-        return False
+            
+        # Check if at least one complaint for this outlet is hygiene-related
+        has_hygiene = any(
+            r.get("category") == "hygiene" or r.get("ai_category") == "hygiene" 
+            for r in outlet_records
+        )
+        
+        return has_hygiene
 
     def determine_outcome(self, final_severity: str, ai_output: dict, outlet_flagged: bool, description: str) -> str:
         """Decides the outcome of the complaint based on business rules."""
