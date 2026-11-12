@@ -27,7 +27,37 @@
             </p>
         </header>
 
-        
+        <form action="/submit" method="POST">
+
+            <!-- SECTION 1: Customer Information & Preferences -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #63b3ed; margin-bottom: 0.25rem;">1. Customer Information</h3>
+                <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem;">Enter your contact details and communication preferences.</p>
+            </div>
+
+            <div class="grid">
+                <label>Name
+                    <input type="text" name="name" required placeholder="John Doe">
+                </label>
+                <label>Email Address
+                    <input type="email" name="email" required placeholder="user@domain.com">
+                </label>
+            </div>
+
+            <div class="grid">
+                <label>Phone Number
+                    <input type="tel" name="phone" pattern="^\d{8}$" required placeholder="12345678">
+                </label>
+                <label>Would you like a follow-up?
+                    <select name="wants_response" required>
+                        <option value="" disabled selected>Select preference...</option>
+                        <option value="yes">Yes, please contact me</option>
+                        <option value="no">No, feedback only</option>
+                    </select>
+                </label>
+            </div>
+        </form>
+
     </main>
 </body>
 </html>
