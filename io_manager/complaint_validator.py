@@ -49,9 +49,8 @@ class IOComplaintValidator:
             
             # Get the exact current time in THAT same timezone
             local_now = datetime.now(local_tz).replace(tzinfo=None) # Strip tzinfo for naive comparison if needed, or make both aware
-
-            # Add a tiny 2-minute grace buffer just for split-second click delays
-            if incident_datetime_object > local_now + timedelta(minutes=2):
+            
+            if incident_datetime_object > local_now:
                 return "future"
                 
             return "valid"
