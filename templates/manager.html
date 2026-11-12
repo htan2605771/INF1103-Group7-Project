@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Dashboard | ServeTriage AI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        .dashboard-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding-top: 2rem;
+        }
+        /* Status Badges */
+        .badge-critical { background-color: #742a2a; color: #fff5f5; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .badge-high { background-color: #9c4221; color: #fffaf0; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .badge-medium { background-color: #975a16; color: #fffff0; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        .badge-low { background-color: #22543d; color: #f0fff4; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+        
+        .pill-flagged { background-color: rgba(229, 62, 62, 0.15); color: #fc8181; border: 1px solid rgba(229, 62, 62, 0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .pill-normal { background-color: rgba(56, 161, 105, 0.15); color: #68d391; border: 1px solid rgba(56, 161, 105, 0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
+
+        table th, table td {
+            vertical-align: middle !important;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <main class="container dashboard-container">
+        <!-- Top Navbar -->
+        <nav style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+            <ul>
+                <li><h2 style="margin: 0; font-weight: 800;">Dashboard</h2></li>
+            </ul>
+            <ul>
+                <li><a href="/" class="secondary">Home</a></li>
+                <li><a href="/manager-logout" role="button" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Header Section with Stats -->
+        <section style="margin-top: 2rem;">
+
+            <!-- 4-Column Stats Grid -->
+            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem;">
+                <article style="padding: 1rem; margin: 0; background: rgba(255,255,255,0.02); text-align: center;">
+                    <small style="color: #a0aec0; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">Total Queue</small>
+                    <div style="font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem;">{{ stats.total }}</div>
+                </article>
+
+                <article style="padding: 1rem; margin: 0; background: rgba(229, 62, 62, 0.05); border: 1px solid rgba(229, 62, 62, 0.2); text-align: center;">
+                    <small style="color: #fc8181; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">High / Critical</small>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: #fc8181; margin-top: 0.2rem;">{{ stats.urgent }}</div>
+                </article>
+
+                <article style="padding: 1rem; margin: 0; background: rgba(221, 107, 32, 0.05); border: 1px solid rgba(221, 107, 32, 0.2); text-align: center;">
+                    <small style="color: #fbd38d; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">Flagged Outlets</small>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: #fbd38d; margin-top: 0.2rem;">{{ stats.flagged }}</div>
+                </article>
+
+                <article style="padding: 1rem; margin: 0; background: rgba(56, 178, 172, 0.05); border: 1px solid rgba(56, 178, 172, 0.2); text-align: center;">
+                    <small style="color: #4fd1c5; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">Follow-up Req.</small>
+                    <div style="font-size: 1.6rem; font-weight: 800; color: #4fd1c5; margin-top: 0.2rem;">{{ stats.followup }}</div>
+                </article>
+            </div>
+        </section>
+
+        {% if records %}
+        <figure style="margin-top: 2rem; overflow-x: auto;">
+            <table role="grid" style="white-space: nowrap;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Customer Details</th>
+                        <th>Date/Time</th>
+                        <th>Outlet</th>
+                        <th>Category</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in records %}
+                    <!-- Main Row -->
+                    <tr>
+                        <td>
+                            <strong style="font-family: monospace; font-size: 0.95rem;">{{ r.get('complaint_id', 'N/A') }}</strong><br>
+                        </td>
+                        <td>
+                            <strong style="color: #e2e8f0;">{{ r.get('name', 'Anonymous') }}</strong><br>
+                            <span style="color: #a0aec0; font-size: 0.8rem;">{{ r.get('email', 'No email') }}</span><br>
+                            <span style="color: #a0aec0; font-size: 0.8rem;">{{ r.get('phone', 'No phone') }}</span>
+                        </td>
+
+                        <td>
+                            <span style="color: #718096; font-size: 0.8rem; line-height: 1.2;">
+                                {% set raw_dt = r.get('datetime', '') %}
+                                {% if raw_dt %}
+                                    {{ raw_dt[:10] }}<br>
+                                    <span style="font-size: 0.75rem; color: #a0aec0;">{{ raw_dt[11:16] }}</span>
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <mark style="padding: 0.2rem 0.5rem; font-size: 0.85rem; font-weight: bold;">{{ r.get('outlet_name', 'N/A') }}</mark>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500;">{{ r.get('category', 'N/A') | replace('_', ' ') | title }}</span>
+                        </td>
+                        <td>
+                            {% set sev = (r.get('final_severity') or 'low') | lower %}
+                            <span class="badge-{{ sev }}">{{ r.get('final_severity', 'LOW') | upper }}</span><br>
+                        </td>
+                        <td>
+                            {% if r.get('outlet_flagged') %}    
+                                <span class="pill-flagged">Flagged ⚠️</span>
+                            {% else %}
+                                <span class="pill-normal">Normal</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <!-- Resolve Button -->
+                            <form action="/manager/resolve/{{ r.get('complaint_id') }}" method="POST" style="display:inline; margin: 0;">
+                                <button type="submit" class="outline secondary" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; border-color: #38a169; color: #68d391;">
+                                    &check; Resolve
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    
+                    <!-- Full-Width Expandable Sub-Row for Details -->
+                    <tr>
+                        <td colspan="7" style="background: rgba(0,0,0,0.15); padding: 0.5rem 1rem;">
+                            <details style="margin: 0;">
+                                <summary style="font-size: 0.85rem; color: #63b3ed; font-weight: 600; cursor: pointer; padding: 0.4rem 0;">
+                                    🔍 Click to expand full customer feedback & AI triage report for {{ r.get('complaint_id') }}
+                                </summary>
+                                <div style="font-size: 0.9rem; margin: 0.75rem 0; padding: 1rem; background: rgba(0,0,0,0.25); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); white-space: normal;">
+                                    <div class="grid" style="gap: 1.5rem;">
+                                        <div>
+                                            <p style="margin-bottom: 0.25rem;"><strong style="color: #e2e8f0;">Customer Description:</strong></p>
+                                            <p style="color: #cbd5e0; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 4px; margin-bottom: 0;">
+                                                "{{ r.get('description', 'No description provided.') }}"
+                                            </p>
+                                        </div>
+                                        <div>
+                                            <p style="margin-bottom: 0.25rem;"><strong style="color: #e2e8f0;">AI Analysis & Insights:</strong></p>
+                                            <!-- Display the reasoning / summary -->
+                                            <p style="color: #cbd5e0; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem;">
+                                                {{ r.get('reason', 'No AI analysis available.') }}
+                                            </p>
+
+                                            <!-- Display key details if available -->
+                                            {% if r.get('key_details') %}
+                                            <div style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 0.5rem;">
+                                                <strong>Key Details:</strong> {{ r.get('key_details') | join(', ') }}
+                                            </div>
+                                            {% endif %}
+
+                                            {% if r.get('wants_followup') %}
+                                            <div style="margin-top: 0.5rem; color: #4fd1c5; font-weight: 600; font-size: 0.8rem;">
+                                                &check; Customer requested direct follow-up contact.
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </figure>
+        {% endif %}
+    </main>
+</body>
+</html>
