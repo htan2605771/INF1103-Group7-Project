@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manager Login | ServeTriage AI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <main class="container" style="max-width: 450px; padding-top: 6rem;">
+        <article>
+            <form action="/manager-login" method="POST">
+                <label>
+                    <input type="password" name="password" required placeholder="Enter password...">
+                </label>
+                
+                {% if error %}
+                <small style="color: #ff4d4f; display: block; margin-bottom: 1rem;">{{ error }}</small>
+                {% endif %}
+
+                <button type="submit">Login to Dashboard</button>
+            </form>
+        </article>
+        <p style="text-align: center;"><a href="/" class="secondary">&larr; Back to Home</a></p>
+    </main>
+</body>
+</html>
