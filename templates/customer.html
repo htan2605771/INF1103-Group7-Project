@@ -56,8 +56,47 @@
                     </select>
                 </label>
             </div>
-        </form>
 
+            <!-- SECTION 2: Incident Details -->
+            <div style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+                <h3 style="font-size: 1.1rem; font-weight: 700; color: #63b3ed; margin-bottom: 0.25rem;">2. Incident Details</h3>
+                <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem;">Provide specific details about your dining experience for AI triage processing.</p>
+            </div>
+
+            <div class="grid">
+                <label>Date & Time
+                    <input type="datetime-local" name="incident_datetime" required>
+                </label>
+                <label>Select Outlet
+                    <select name="outlet_id" required>
+                        <option value="" disabled selected>Select outlet...</option>
+                        <option value="OUTLET-01">Jewel Changi Airport</option>
+                        <option value="OUTLET-02">Tampines Mall</option>
+                        <option value="OUTLET-03">Bugis Junction</option>
+                        <option value="OUTLET-04">Suntec City</option>
+                    </select>
+                </label>
+            </div>
+
+            <label>Complaint Category
+                <select name="category" required>
+                    <option value="" disabled selected>Select category...</option>
+                    <option value="food_quality">Food Quality</option>
+                    <option value="service">Service</option>
+                    <option value="hygiene">Hygiene</option>
+                    <option value="billing">Billing</option>
+                    <option value="other">Other</option>
+                </select>
+            </label>
+
+            <label style="margin-bottom: 2rem;">Complaint Description
+                <textarea name="description" rows="4" required placeholder="Describe what went wrong..."></textarea>
+            </label>
+
+            <button type="submit" style="font-weight: 600; width: 100%;">
+                Submit Feedback
+            </button>
+        </form>
     </main>
 </body>
 </html>
