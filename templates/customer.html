@@ -65,15 +65,14 @@
 
             <div class="grid">
                 <label>Date & Time
-                    <input type="datetime-local" name="incident_datetime" required>
+                    <input type="datetime-local" name="incident_datetime" id="incident_datetime" required>
                 </label>
                 <label>Select Outlet
                     <select name="outlet_id" required>
                         <option value="" disabled selected>Select outlet...</option>
-                        <option value="OUTLET-01">Jewel Changi Airport</option>
-                        <option value="OUTLET-02">Tampines Mall</option>
-                        <option value="OUTLET-03">Bugis Junction</option>
-                        <option value="OUTLET-04">Suntec City</option>
+                        {% for outlet in config.outlets %}
+                            <option value="{{ outlet.outlet_id }}">{{ outlet.store_name }}</option>
+                        {% endfor %}
                     </select>
                 </label>
             </div>
@@ -98,5 +97,11 @@
             </button>
         </form>
     </main>
+
+<script>
+    const now = new Date();
+    now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+    document.getElementById('incident_datetime').max = now.toISOString().slice(0, 16);
+</script>
 </body>
 </html>
