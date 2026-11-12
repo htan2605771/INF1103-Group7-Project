@@ -1,8 +1,7 @@
 from io_manager import IOComplaintCollector, IOManager
 from logic_manager import ComplaintEvaluator
 from data_manager import ComplaintDataManager
-from ai_manager.ai_manager import AIManager
-from ai_manager.gemini_client import GeminiClient
+from ai_manager import AIManager, GeminiClient
 
 
 class TriageApp:

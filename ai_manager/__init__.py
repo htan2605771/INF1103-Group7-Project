@@ -4,3 +4,7 @@
 # It allows imports and tests (e.g. unittest) to recognise this folder as a package for it to work properly. 
 # For example, you can import modules from this package using `from ai_manager import module_name`.
 # Please keep this file even if it has no code.
+from .ai_manager import AIManager
+from .ai_client import AIClient
+from .gemini_client import GeminiClient
+from .mock_ai_client import MockAIClient
