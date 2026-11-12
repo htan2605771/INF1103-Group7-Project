@@ -1,4 +1,4 @@
-from io_manager import ComplaintCollector, IOManager
+from io_manager import IOComplaintCollector, IOManager
 from logic_manager import ComplaintEvaluator
 from data_manager import ComplaintDataManager
 from ai_manager.ai_manager import AIManager
@@ -8,7 +8,7 @@ from ai_manager.gemini_client import GeminiClient
 class TriageApp:
     # Main Application which owns and calls the four managers and runs the triage menu options.
     def __init__(self):
-        self.__collector = ComplaintCollector()
+        self.__collector = IOComplaintCollector()
         self.__io = IOManager()
         self.__ai = AIManager(GeminiClient())
         self.__data = ComplaintDataManager()
