@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Feedback Submitted | ServeTriage AI</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+</head>
+<body>
+    <main class="container" style="max-width: 700px; padding-top: 2.5rem; padding-bottom: 3rem;">
+        <!-- Top Back Navigation Bar -->
+        <nav style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.06);">
+            <ul>
+                <li>
+                    <a href="/" class="secondary" style="font-size: 0.85rem; text-decoration: underline; color: #718096; display: inline-flex; align-items: center; gap: 0.35rem;">
+                        &larr; Back to Home
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Header -->
+        <header style="margin-bottom: 2rem; border: none; padding: 0;">
+            <h1 style="font-size: 2.1rem; font-weight: 800; margin-bottom: 0.35rem;">Feedback Submitted</h1>
+            <p style="color: #a0aec0; font-size: 1rem; margin: 0;">
+                Thank you, <strong>{{ complaint.name }}</strong>. Your feedback has been logged and our team will review it shortly.
+            </p>
+        </header>
+
+        <!-- Section Header -->
+        <div style="margin-bottom: 1.5rem; padding-bottom: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.08);">
+            <h3 style="font-size: 1.1rem; font-weight: 700; color: #63b3ed; margin-bottom: 0.25rem;">Submission Summary</h3>
+            <p style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 1rem;">Here is a copy of the details recorded for your reference.</p>
+        </div>
+
+        <!-- Read-only fields with inline styles -->
+        <div style="background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+            <div class="grid" style="margin-bottom: 1.25rem;">
+                <div>
+                    <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; display: block; margin-bottom: 0.25rem;">Outlet</span>
+                    <div style="font-size: 1rem; font-weight: 500;">{{ complaint.outlet_name }}</div>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; display: block; margin-bottom: 0.25rem;">Category</span>
+                    <div style="font-size: 1rem; font-weight: 500;">{{ complaint.category | replace('_', ' ') | title }}</div>
+                </div>
+            </div>
+
+            <div class="grid" style="margin-bottom: 1.25rem;">
+                <div>
+                    <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; display: block; margin-bottom: 0.25rem;">Date & Time</span>
+                    <div style="font-size: 1rem; font-weight: 500;">{{ complaint.datetime }}</div>
+                </div>
+                <div>
+                    <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; display: block; margin-bottom: 0.25rem;">Follow-up Requested</span>
+                    <div style="font-size: 1rem; font-weight: 500;">{{ 'Yes' if complaint.wants_followup else 'No' }}</div>
+                </div>
+            </div>
+
+            <div>
+                <span style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; display: block; margin-bottom: 0.35rem;">Complaint Description</span>
+                <p style="background: rgba(0, 0, 0, 0.15); padding: 1rem; border-radius: 6px; border-left: 3px solid #63b3ed; white-space: pre-wrap; margin: 0; font-size: 0.95rem; line-height: 1.5;">{{ complaint.description }}</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="grid">
+            <a href="/customer" role="button" style="font-weight: 600;">Submit Another Feedback</a>
+            <a href="/" role="button" class="secondary" style="font-weight: 600;">Return to Home</a>
+        </div>
+    </main>
+</body>
+</html>
