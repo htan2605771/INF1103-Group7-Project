@@ -1,5 +1,5 @@
 import os
-from flask import Flask, redirect, render_template, request
+from flask import Flask, redirect, render_template, request, session, url_for
 from ai_manager.ai_manager import AIManager
 from ai_manager.gemini_client import GeminiClient
 from data_manager.complaint_data_manager import ComplaintDataManager
@@ -8,6 +8,12 @@ from logic_manager import ComplaintEvaluator
 from io_manager.complaint_validator import IOComplaintValidator
 
 app = Flask(__name__)
+
+# Secret key required to use Flask sessions securely
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-change-me")
+
+# Manager password (can change this or pull it from your .env file)
+MANAGER_PASSWORD = os.environ.get("MANAGER_PASSWORD", "admin123")
 
 db_manager = ComplaintDataManager()
 config_manager = MerchantConfigManager()  # 2. INITIALIZE IT HERE
@@ -103,6 +109,56 @@ def submit_complaint():
   return render_template(
       "result.html", complaint=complaint, ai_output=ai_output, result=result
   )
+
+# Manager Authentication Routes
+@app.route("/manager-login", methods=["GET", "POST"])
+def manager_login():
+  error = None
+  if request.method == "POST":
+    entered_password = request.form.get("password")
+    if entered_password == MANAGER_PASSWORD:
+      session["manager_logged_in"] = True
+      return redirect(url_for("manager_dashboard"))
+    else:
+      error = "Incorrect password. Please try again."
+  return render_template("login.html", error=error)
+
+
+@app.route("/manager-logout")
+def manager_logout():
+  session.pop("manager_logged_in", None)
+  return redirect(url_for("manager_login"))
+
+
+@app.route("/manager")
+def manager_dashboard():
+  # Guard: If not logged in as manager, bounce them to the login page
+  if not session.get("manager_logged_in"):
+    return redirect(url_for("manager_login"))
+
+  records = db_manager.load_complaints()
+
+  # Sort records by score in descending order (highest priority first)
+  records = sorted(records, key=lambda x: x.get("score", 0), reverse=True)
+
+  # --- Compute Executive Metrics ---
+  total_records = len(records)
+  urgent_count = sum(
+      1
+      for r in records
+      if str(r.get("final_severity", "")).lower() in ["high", "critical"]
+  )
+  flagged_count = sum(1 for r in records if r.get("outlet_flagged"))
+  followup_count = sum(1 for r in records if r.get("wants_followup"))
+
+  stats = {
+      "total": total_records,
+      "urgent": urgent_count,
+      "flagged": flagged_count,
+      "followup": followup_count,
+  }
+
+  return render_template("manager.html", records=records, stats=stats)
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000, debug=True)
