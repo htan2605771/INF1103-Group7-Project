@@ -63,11 +63,22 @@ class ComplaintStorage(ABC):
         for r in self.load_complaints():
             if r.get("outlet_id") != outlet_id:
                 continue
-            try:
-                record_dt = datetime.strptime(r.get("datetime", ""), "%Y-%m-%dT%H:%M:%S")
-            except (ValueError, TypeError):
-                continue  # missing or badly formatted datetime: skip this record
-            if record_dt >= cutoff:
+            
+            dt_str = r.get("datetime", "")
+            if not dt_str:
+                continue
+                
+            record_dt = None
+            # Tries minute-level first, then seconds/space-separated variants as fallbacks
+            for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+                try:
+                    clean_str = dt_str.replace('Z', '').split('+')[0]
+                    record_dt = datetime.strptime(clean_str, fmt)
+                    break
+                except (ValueError, TypeError):
+                    continue
+            
+            if record_dt and record_dt >= cutoff:
                 filtered.append(r)
 
         return filtered
