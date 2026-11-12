@@ -62,7 +62,7 @@ class ComplaintEvaluator:
 
         return score
 
-    def check_outlet_pattern(self, history: list[dict], current_outlet_id: str) -> bool:
+    def check_outlet_pattern(self, history: list[dict], current_outlet_id: str = None) -> bool:
         """Check if a specific outlet has 2 or more complaints and at least one is hygiene."""
         # Filter history strictly for this specific outlet
         outlet_records = [r for r in history if r.get("outlet_id") == current_outlet_id]
