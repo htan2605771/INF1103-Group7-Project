@@ -37,6 +37,11 @@ def submit_complaint():
   phone = request.form.get("phone")
   outlet_id = request.form.get("outlet_id")
   incident_datetime = request.form.get("incident_datetime")
+  
+  # Ensure ISO timestamp includes seconds if the browser sends minute-level format
+  if incident_datetime and len(incident_datetime) == 16:
+      incident_datetime = incident_datetime + ":00"
+
   order_ref = request.form.get("order_reference", "")
   category = request.form.get("category", "").strip().lower()
   description = request.form.get("description")
@@ -61,7 +66,7 @@ def submit_complaint():
   if date_check == "future":
       return "Validation Error: Incident date and time cannot be in the future.", 400
   elif date_check == "invalid_format":
-      return "Validation Error: Invalid date format. Use YYYY-MM-DDTHH:MM.", 400
+      return "Validation Error: Invalid date format. Use YYYY-MM-DDTHH:MM:SS.", 400
 
   if not validator.validate_complaint_category(category):
       return f"Validation Error: Invalid complaint category. Received: {repr(category)}", 400
