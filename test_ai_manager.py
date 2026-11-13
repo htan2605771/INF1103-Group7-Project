@@ -1,4 +1,7 @@
+import json
+
 import pytest
+
 from ai_manager.ai_manager import AIManager
 from ai_manager.mock_ai_client import MockAIClient
 from ai_manager.response_validator import ResponseValidator
@@ -403,3 +406,54 @@ def test_fallback_returns_independent_results():
 
     assert second_result["key_details"] == []
     assert first_result is not second_result
+
+
+def test_get_ai_output_returns_valid_custom_response():
+    # Test that a valid custom AI response is returned without modification.
+    response = valid_ai_output()
+    client = MockAIClient(response=json.dumps(response))
+    manager = AIManager(client)
+
+    complaint = {
+        "category": "hygiene",
+        "description": "There was a hair in my food."
+    }
+
+    result = manager.get_ai_output(complaint)
+
+    assert result == response
+
+
+def test_get_ai_output_accepts_markdown_json():
+    # Test that a valid JSON response inside markdown fences is accepted.
+    response = valid_ai_output()
+    client = MockAIClient(response=f"```json\n{json.dumps(response)}\n```")
+    manager = AIManager(client)
+
+    complaint = {
+        "category": "service",
+        "description": "The staff was rude."
+    }
+
+    result = manager.get_ai_output(complaint)
+
+    assert result == response
+
+
+def test_get_ai_output_uses_ai_classification():
+    # Test that a valid AI classification takes precedence over the customer category.
+    response = valid_ai_output()
+    response["ai_category"] = "billing"
+
+    client = MockAIClient(response=json.dumps(response))
+    manager = AIManager(client)
+
+    complaint = {
+        "category": "service",
+        "description": "I was charged twice."
+    }
+
+    result = manager.get_ai_output(complaint)
+
+    assert result["ai_category"] == "billing"
+    assert result["ai_category"] != complaint["category"]
