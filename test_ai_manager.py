@@ -278,3 +278,50 @@ def test_validate_allowed_key_details(details):
     response["key_details"] = details
 
     assert validator.validate_ai_response(response) is True
+
+
+@pytest.mark.parametrize(
+    "category, description",
+    [
+        ("service", "The staff was rude."),
+        ("hygiene", "There was a hair in my food."),
+        ("food quality", "The chicken was undercooked."),
+        ("billing", "I was charged twice."),
+        ("other", "The restaurant was too noisy."),
+    ]
+)
+def test_build_prompt_includes_complaint_details(category, description):
+    # Test that the prompt includes the customer's category and description.
+    manager = AIManager(MockAIClient())
+    complaint = {
+        "category": category,
+        "description": description
+    }
+
+    prompt = manager._build_prompt(complaint)
+
+    assert category in prompt
+    assert description in prompt
+    assert isinstance(prompt, str)
+
+
+def test_build_prompt_includes_required_instructions():
+    # Test that the prompt specifies the required AI output format.
+    manager = AIManager(MockAIClient())
+    complaint = {
+        "category": "service",
+        "description": "The staff was rude."
+    }
+
+    prompt = manager._build_prompt(complaint)
+
+    assert "food_quality, service, hygiene, billing, other" in prompt
+    assert "low, medium, high" in prompt
+    assert "ai_category" in prompt
+    assert "key_details" in prompt
+    assert "severity" in prompt
+    assert "reason" in prompt
+    assert "reputational_risk" in prompt
+    assert "confidence" in prompt
+    assert "Return only valid JSON" in prompt
+    assert "Do not include markdown" in prompt
