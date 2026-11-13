@@ -203,3 +203,78 @@ def test_validate_non_dictionary_response(invalid_response):
     validator = ResponseValidator()
 
     assert validator.validate_ai_response(invalid_response) is False
+
+
+@pytest.mark.parametrize(
+    "category",
+    [
+        "food_quality",
+        "service",
+        "hygiene",
+        "billing",
+        "other",
+    ]
+)
+def test_validate_allowed_categories(category):
+    # Test that all permitted complaint categories are accepted.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["ai_category"] = category
+
+    assert validator.validate_ai_response(response) is True
+
+
+@pytest.mark.parametrize(
+    "severity",
+    ["low", "medium", "high"]
+)
+def test_validate_allowed_severity(severity):
+    # Test that all permitted severity levels are accepted.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["severity"] = severity
+
+    assert validator.validate_ai_response(response) is True
+
+
+@pytest.mark.parametrize(
+    "confidence",
+    ["low", "medium", "high"]
+)
+def test_validate_allowed_confidence(confidence):
+    # Test that all permitted confidence levels are accepted.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["confidence"] = confidence
+
+    assert validator.validate_ai_response(response) is True
+
+
+@pytest.mark.parametrize(
+    "risk",
+    [True, False]
+)
+def test_validate_allowed_reputational_risk(risk):
+    # Test that both Boolean values are accepted.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["reputational_risk"] = risk
+
+    assert validator.validate_ai_response(response) is True
+
+
+@pytest.mark.parametrize(
+    "details",
+    [
+        [],
+        ["Delayed order"],
+        ["Delayed order", "Rude staff"],
+    ]
+)
+def test_validate_allowed_key_details(details):
+    # Test that valid lists of key details are accepted.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["key_details"] = details
+
+    assert validator.validate_ai_response(response) is True
