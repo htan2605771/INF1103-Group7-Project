@@ -118,12 +118,13 @@ What is covered:
 
 | File | Covers |
 |---|---|
+| `test_ai_manager.py` | AI response JSON parsing, response validation, prompt generation, fallback handling and AI response processing using MockAIClient. |
 | `test_logic_manager.py` | Core logic: ambiguous input, safety override, outlet flagging, score. |
 | `test_core_rules.py` | Outcome precedence, outlet pattern edge cases, score table, the multi-condition outlet rule. |
 | `test_data_manager.py` | Missing, empty, corrupt and wrong-shape data files, failed writes, ID generation, filtering, abstract class behaviour and swapping storage backends. |
 | `test_io_manager.py` | Input validation, re-prompting on bad input (with scripted input), result/summary/retry displays. |
 
-`pytest.ini` limits test discovery to the offline test files. Files listed with `--ignore` are older scripts that are not yet converted to offline tests.
+`pytest.ini` configures pytest to dispay the detailed test results. All automated tests, including `test_ai_manager.py`, run offline using mock clients and sample responses without requiring a Gemini API key.
 
 ## Continuous integration
 
