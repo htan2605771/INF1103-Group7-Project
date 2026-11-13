@@ -1,3 +1,4 @@
+import pytest
 from ai_manager.ai_manager import AIManager
 from ai_manager.mock_ai_client import MockAIClient
 
@@ -33,3 +34,45 @@ def test_invalid_ai_response():
     assert result["reputational_risk"] is False
     assert result["key_details"] == []
     assert "manual review" in result["reason"]
+
+
+@pytest.mark.parametrize(
+    "response, expected",
+    [
+        ('{"ai_category": "service"}', {"ai_category": "service"}),
+        ('  {"ai_category": "hygiene"}  ', {"ai_category": "hygiene"}),
+        ('```json\n{"ai_category": "billing"}\n```', {"ai_category": "billing"}),
+        ('```\n{"ai_category": "other"}\n```', {"ai_category": "other"}),
+        ("{}", {}),
+    ]
+)
+def test_parse_valid_json_response(response, expected):
+    # Test parsing of valid JSON objects in different formats.
+    manager = AIManager(MockAIClient())
+
+    result = manager._parse_ai_response(response)
+
+    assert result == expected
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        "",
+        "   ",
+        "Invalid JSON",
+        '{"ai_category": "service"',
+        '[1, 2, 3]',
+        '"service"',
+        "123",
+        "null",
+    ]
+)
+def test_parse_invalid_json_response(response):
+    # Test that invalid or non-dictionary responses return None.
+    manager = AIManager(MockAIClient())
+
+    result = manager._parse_ai_response(response)
+
+    assert result is None
