@@ -325,3 +325,81 @@ def test_build_prompt_includes_required_instructions():
     assert "confidence" in prompt
     assert "Return only valid JSON" in prompt
     assert "Do not include markdown" in prompt
+
+
+@pytest.mark.parametrize(
+    "category",
+    [
+        "food quality",
+        "service",
+        "hygiene",
+        "billing",
+        "other",
+    ]
+)
+def test_fallback_preserves_customer_category(category):
+    # Test that fallback uses the customer's selected category.
+    manager = AIManager(MockAIClient())
+    complaint = {
+        "category": category,
+        "description": "The customer reported an issue."
+    }
+
+    result = manager._fallback_ai_output(complaint)
+
+    assert result["ai_category"] == category
+
+
+def test_fallback_contains_required_fields():
+    # Test that fallback contains all six required AI output fields.
+    manager = AIManager(MockAIClient())
+    complaint = {
+        "category": "service",
+        "description": "The staff was rude."
+    }
+
+    result = manager._fallback_ai_output(complaint)
+
+    assert set(result.keys()) == {
+        "ai_category",
+        "key_details",
+        "severity",
+        "reason",
+        "reputational_risk",
+        "confidence",
+    }
+
+
+def test_fallback_contains_expected_default_values():
+    # Test the default values used when AI analysis is unavailable.
+    manager = AIManager(MockAIClient())
+    complaint = {
+        "category": "service",
+        "description": "The staff was rude."
+    }
+
+    result = manager._fallback_ai_output(complaint)
+
+    assert result["ai_category"] == "service"
+    assert result["key_details"] == []
+    assert result["severity"] == "medium"
+    assert "manual review" in result["reason"]
+    assert result["reputational_risk"] is False
+    assert result["confidence"] == "low"
+
+
+def test_fallback_returns_independent_results():
+    # Test that modifying one fallback does not affect another.
+    manager = AIManager(MockAIClient())
+    complaint = {
+        "category": "service",
+        "description": "The staff was rude."
+    }
+
+    first_result = manager._fallback_ai_output(complaint)
+    first_result["key_details"].append("Modified detail")
+
+    second_result = manager._fallback_ai_output(complaint)
+
+    assert second_result["key_details"] == []
+    assert first_result is not second_result
