@@ -1,6 +1,7 @@
 import pytest
 from ai_manager.ai_manager import AIManager
 from ai_manager.mock_ai_client import MockAIClient
+from ai_manager.response_validator import ResponseValidator
 
 def test_valid_ai_response():
     # Test AI response handling using a mock client without a live API.
@@ -76,3 +77,129 @@ def test_parse_invalid_json_response(response):
     result = manager._parse_ai_response(response)
 
     assert result is None
+
+
+def valid_ai_output():
+    # Return a valid AI response for use in validation tests.
+    return {
+        "ai_category": "service",
+        "key_details": ["Delayed order", "Rude staff"],
+        "severity": "medium",
+        "reason": "The customer experienced poor service.",
+        "reputational_risk": False,
+        "confidence": "high"
+    }
+
+
+def test_validate_complete_ai_response():
+    # Test that a response containing all valid fields is accepted.
+    validator = ResponseValidator()
+
+    assert validator.validate_ai_response(valid_ai_output()) is True
+
+
+@pytest.mark.parametrize(
+    "missing_field",
+    [
+        "ai_category",
+        "key_details",
+        "severity",
+        "reason",
+        "reputational_risk",
+        "confidence",
+    ]
+)
+def test_validate_missing_fields(missing_field):
+    # Test that every required field must be present.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    del response[missing_field]
+
+    assert validator.validate_ai_response(response) is False
+
+
+@pytest.mark.parametrize(
+    "field, invalid_value",
+    [
+        ("ai_category", 123),
+        ("key_details", "Delayed order"),
+        ("severity", 3),
+        ("reason", None),
+        ("reputational_risk", "False"),
+        ("confidence", 0.9),
+    ]
+)
+def test_validate_incorrect_field_types(field, invalid_value):
+    # Test that fields with incorrect data types are rejected.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response[field] = invalid_value
+
+    assert validator.validate_ai_response(response) is False
+
+
+@pytest.mark.parametrize(
+    "field, invalid_value",
+    [
+        ("ai_category", "delivery"),
+        ("severity", "critical"),
+        ("confidence", "certain"),
+    ]
+)
+def test_validate_invalid_field_values(field, invalid_value):
+    # Test that values outside the permitted options are rejected.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response[field] = invalid_value
+
+    assert validator.validate_ai_response(response) is False
+
+
+@pytest.mark.parametrize(
+    "invalid_details",
+    [
+        [123],
+        ["Delayed order", None],
+        ["Rude staff", True],
+    ]
+)
+def test_validate_invalid_key_details(invalid_details):
+    # Test that every item in key_details must be a string.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["key_details"] = invalid_details
+
+    assert validator.validate_ai_response(response) is False
+
+
+@pytest.mark.parametrize(
+    "invalid_reason",
+    [
+        "",
+        " ",
+        "\n\t",
+    ]
+)
+def test_validate_empty_reason(invalid_reason):
+    # Test that empty or whitespace-only reasons are rejected.
+    validator = ResponseValidator()
+    response = valid_ai_output()
+    response["reason"] = invalid_reason
+
+    assert validator.validate_ai_response(response) is False
+
+
+@pytest.mark.parametrize(
+    "invalid_response",
+    [
+        None,
+        [],
+        "Invalid response",
+        123,
+    ]
+)
+def test_validate_non_dictionary_response(invalid_response):
+    # Test that responses which are not dictionaries are rejected.
+    validator = ResponseValidator()
+
+    assert validator.validate_ai_response(invalid_response) is False
