@@ -1,9 +1,9 @@
 import os
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, session, url_for, abort
 from ai_manager.ai_manager import AIManager
 from ai_manager.gemini_client import GeminiClient
 from data_manager.complaint_data_manager import ComplaintDataManager
-from data_manager.merchant_config_manager import MerchantConfigManager  # 1. IMPORT IT HERE
+from data_manager.merchant_config_manager import MerchantConfigManager  
 from logic_manager import ComplaintEvaluator
 from io_manager.complaint_validator import IOComplaintValidator
 
@@ -135,35 +135,84 @@ def manager_logout():
   return redirect(url_for("manager_login"))
 
 
+from collections import defaultdict
+
 @app.route("/manager")
 def manager_dashboard():
   # Guard: If not logged in as manager, bounce them to the login page
   if not session.get("manager_logged_in"):
-    return redirect(url_for("manager_login"))
+      return redirect(url_for("manager_login"))
 
+  # 1. Load official outlets from merchant_config.json using your class
+  merchant_config = config_manager.load_config()
+  configured_outlets = merchant_config.get("outlets", [])
+
+  # 2. Load active complaints
   records = db_manager.load_complaints()
-
-  # Sort records by score in descending order (highest priority first)
   records = sorted(records, key=lambda x: x.get("score", 0), reverse=True)
 
-  # --- Compute Executive Metrics ---
-  total_records = len(records)
-  urgent_count = sum(
-      1
-      for r in records
-      if str(r.get("final_severity", "")).lower() in ["high", "critical"]
-  )
-  flagged_count = sum(1 for r in records if r.get("outlet_flagged"))
-  followup_count = sum(1 for r in records if r.get("wants_followup"))
-
+  # 3. Compute Chain-Wide Executive Metrics
   stats = {
-      "total": total_records,
-      "urgent": urgent_count,
-      "flagged": flagged_count,
-      "followup": followup_count,
+      "total": len(records),
+      "urgent": sum(1 for r in records if str(r.get("final_severity", "")).lower() in ["high", "critical"]),
+      "flagged": sum(1 for r in records if r.get("outlet_flagged"))
   }
 
-  return render_template("manager.html", records=records, stats=stats)
+  # 4. Group complaints by outlet ID
+  complaints_by_outlet = defaultdict(list)
+  for r in records:
+      outlet_id = r.get("outlet_id")
+      complaints_by_outlet[outlet_id].append(r)
+
+  # 5. Build the overview list combining config data and live complaint stats
+  outlet_overview = []
+  for outlet in configured_outlets:
+      outlet_id = outlet.get("outlet_id")
+      store_name = outlet.get("store_name")
+      
+      outlet_recs = complaints_by_outlet.get(outlet_id, [])
+      is_flagged = any(r.get("outlet_flagged") for r in outlet_recs)
+      
+      outlet_overview.append({
+          "id": outlet_id,
+          "name": store_name,
+          "active_count": len(outlet_recs),
+          "is_flagged": is_flagged,
+          "urgent_count": sum(1 for r in outlet_recs if str(r.get("final_severity", "")).lower() in ["high", "critical"]),
+          "followup_count": sum(1 for r in outlet_recs if r.get("wants_followup"))
+      })
+
+  return render_template("manager.html", stats=stats, outlet_overview=outlet_overview)
+
+@app.route("/manager/outlet/<outlet_id>")
+def outlet_detail(outlet_id):
+    if not session.get("manager_logged_in"):
+        return redirect(url_for("manager_login"))
+
+    merchant_config = config_manager.load_config()
+    configured_outlets = merchant_config.get("outlets", [])
+    
+    current_outlet = next((o for o in configured_outlets if o.get("outlet_id") == outlet_id), None)
+    if not current_outlet:
+        return abort(404, description="Outlet not found.")
+
+    records = db_manager.load_complaints()
+    store_records = [r for r in records if r.get("outlet_id") == outlet_id]
+    store_records = sorted(store_records, key=lambda x: x.get("score", 0), reverse=True)
+
+    urgent_count = sum(1 for r in store_records if str(r.get("final_severity", "")).lower() in ["high", "critical"])
+    followup_count = sum(1 for r in store_records if r.get("wants_followup"))
+    is_flagged = any(r.get("outlet_flagged") for r in store_records)
+
+    return render_template(
+        "outlet_detail.html",
+        outlet=current_outlet,
+        records=store_records,
+        active_count=len(store_records),
+        urgent_count=urgent_count,
+        followup_count=followup_count,
+        is_flagged=is_flagged
+    )
 
 if __name__ == "__main__":
   app.run(host="0.0.0.0", port=5000, debug=True)
