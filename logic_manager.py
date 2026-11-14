@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 import logging
 
 logger = logging.getLogger(__name__)
@@ -23,7 +24,9 @@ class ComplaintEvaluator:
         """
         # 1. Check for Pattern Flags (e.g., 2 or more complaints at same outlet in the last 7 days and at least 1 hygiene complaint)
         full_history = history + [complaint]
-        outlet_flagged = self.check_outlet_pattern(full_history, complaint.get("outlet_id"))
+        outlet_id = complaint.get("outlet_id")
+
+        outlet_flagged = self.check_outlet_pattern(full_history, outlet_id)
         
         # 2. Rule-Based AI Misclassification Override (Food Safety Keyword Scan)
         description_lower = complaint.get("description", "").lower()
@@ -63,21 +66,53 @@ class ComplaintEvaluator:
         return score
 
     def check_outlet_pattern(self, history: list[dict], current_outlet_id: str = None) -> bool:
-        """Check if a specific outlet has 2 or more complaints and at least one is hygiene."""
-        # Filter history strictly for this specific outlet
+        """
+        Flags an outlet if within a rolling 7-day window:
+        1. ANY complaint is hygiene-related.
+        2. OR there are 3 or more total complaints.
+        """
+        if not current_outlet_id:
+            return False
+
         outlet_records = [r for r in history if r.get("outlet_id") == current_outlet_id]
-        
-        # Must have 2 or more complaints for this outlet
-        if len(outlet_records) < 2:
+        if not outlet_records:
             return False
             
-        # Check if at least one complaint for this outlet is hygiene-related
+        # Get the timestamp of the current incoming complaint (or use current time)
+        # Assuming ISO format string like "2026-11-13T20:44:00"
+        latest_dt_str = outlet_records[-1].get("datetime")
+        try:
+            latest_dt = datetime.fromisoformat(latest_dt_str)
+        except (TypeError, ValueError):
+            latest_dt = datetime.now()
+
+        # Define the time window (e.g., last 7 days)
+        window_start = latest_dt - timedelta(days=7)
+
+        # Filter records strictly within the last 7 days
+        recent_records = []
+        for r in outlet_records:
+            try:
+                r_dt = datetime.fromisoformat(r.get("datetime", ""))
+                if r_dt >= window_start:
+                    recent_records.append(r)
+            except (TypeError, ValueError):
+                # If datetime parsing fails, include it just in case
+                recent_records.append(r)
+
+        # Rule 1: Immediate Red Flag for any hygiene issue in the recent window
         has_hygiene = any(
-            r.get("category") == "hygiene" or r.get("ai_category") == "hygiene" 
-            for r in outlet_records
+            str(r.get("category", "")).lower() == "hygiene" or str(r.get("ai_category", "")).lower() == "hygiene" 
+            for r in recent_records
         )
-        
-        return has_hygiene
+        if has_hygiene:
+            return True
+
+        # Rule 2: Volume Red Flag (3 or more complaints within the 7-day window)
+        if len(recent_records) >= 3:
+            return True
+            
+        return False
 
     def determine_outcome(self, final_severity: str, ai_output: dict, outlet_flagged: bool, description: str) -> str:
         """Decides the outcome of the complaint based on business rules."""
