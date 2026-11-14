@@ -2,180 +2,142 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manager Dashboard | ServeTriage AI</title>
+    <title>Manager Console | ServeTriage AI</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
     <style>
+        :root {
+            --pico-background-color: #0b0f19;
+            --pico-card-background-color: #111827;
+            --pico-muted-border-color: #1f2937;
+        }
+        html, body {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            margin: 0;
+            min-height: 100vh;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+        }
         .dashboard-container {
-            max-width: 1300px;
+            max-width: 1350px;
+            width: 100%;
             margin: 0 auto;
-            padding-top: 2rem;
+            padding: 2rem 1.5rem 3rem 1.5rem;
+            flex: 1;
         }
-        /* Status Badges */
-        .badge-critical { background-color: #742a2a; color: #fff5f5; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-high { background-color: #9c4221; color: #fffaf0; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-medium { background-color: #975a16; color: #fffff0; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-        .badge-low { background-color: #22543d; color: #f0fff4; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
         
-        .pill-flagged { background-color: rgba(229, 62, 62, 0.15); color: #fc8181; border: 1px solid rgba(229, 62, 62, 0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
-        .pill-normal { background-color: rgba(56, 161, 105, 0.15); color: #68d391; border: 1px solid rgba(56, 161, 105, 0.3); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.8rem; }
-
-        table th, table td {
-            vertical-align: middle !important;
-            font-size: 0.9rem;
-        }
+        /* Outlet Summary Card Grid */
+        .outlet-summary-card { background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 1.25rem; text-align: left; }
+        
+        /* Status Badges & Pills */
+        .pill-flagged { background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
+        .pill-normal { background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; display: inline-block; }
     </style>
 </head>
 <body>
     <main class="container dashboard-container">
         <!-- Top Navbar -->
-        <nav style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1rem;">
+        <nav style="border-bottom: 1px solid #1f2937; padding-bottom: 1rem; margin-bottom: 2rem;">
             <ul>
-                <li><h2 style="margin: 0; font-weight: 800;">Dashboard</h2></li>
+                <li>
+                    <h2 style="margin: 0; font-weight: 700; font-size: 1.25rem; color: #f9fafb;">
+                        ServeTriage AI <span style="color: #60a5fa; font-weight: 400; font-size: 0.9rem;">Manager Console</span>
+                    </h2>
+                </li>
             </ul>
             <ul>
-                <li><a href="/" class="secondary">Home</a></li>
-                <li><a href="/manager-logout" role="button" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Logout</a></li>
+                <li><a href="/" class="secondary" style="font-size: 0.85rem;">Home</a></li>
+                <li><a href="/manager-logout" role="button" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.82rem; border-color: #374151;">Logout</a></li>
             </ul>
         </nav>
 
-        <!-- Header Section with Stats -->
-        <section style="margin-top: 2rem;">
+        <!-- Live Feed Section Header -->
+        <h4 style="font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 7px; height: 7px; background-color: #34d399; border-radius: 50%; display: inline-block;"></span> Live Feed
+        </h4>
 
-            <!-- 4-Column Stats Grid -->
-            <div class="grid" style="grid-template-columns: repeat(4, 1fr); gap: 1rem;">
-                <article style="padding: 1rem; margin: 0; background: rgba(255,255,255,0.02); text-align: center;">
-                    <small style="color: #a0aec0; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">Total Queue</small>
-                    <div style="font-size: 1.6rem; font-weight: 800; margin-top: 0.2rem;">{{ stats.total }}</div>
+        <!-- 1. Chain-Wide Global Stats Overview (3 Cards) -->
+        <section style="margin-bottom: 2rem;">
+            <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <article style="padding: 1.25rem; margin: 0; background: #111827; border: 1px solid #1f2937; border-radius: 8px; text-align: center;">
+                    <small style="color: #9ca3af; text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Total Chain Queue</small>
+                    <div style="font-size: 1.8rem; font-weight: 800; margin-top: 0.3rem; color: #f3f4f6;">{{ stats.total }}</div>
                 </article>
-
-                <article style="padding: 1rem; margin: 0; background: rgba(229, 62, 62, 0.05); border: 1px solid rgba(229, 62, 62, 0.2); text-align: center;">
-                    <small style="color: #fc8181; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">High / Critical</small>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #fc8181; margin-top: 0.2rem;">{{ stats.urgent }}</div>
+                <article style="padding: 1.25rem; margin: 0; background: #111827; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; text-align: center;">
+                    <small style="color: #f87171; text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">High / Critical</small>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #f87171; margin-top: 0.3rem;">{{ stats.urgent }}</div>
                 </article>
-
-                <article style="padding: 1rem; margin: 0; background: rgba(221, 107, 32, 0.05); border: 1px solid rgba(221, 107, 32, 0.2); text-align: center;">
-                    <small style="color: #fbd38d; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">Flagged Outlets</small>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #fbd38d; margin-top: 0.2rem;">{{ stats.flagged }}</div>
-                </article>
-
-                <article style="padding: 1rem; margin: 0; background: rgba(56, 178, 172, 0.05); border: 1px solid rgba(56, 178, 172, 0.2); text-align: center;">
-                    <small style="color: #4fd1c5; text-transform: uppercase; font-size: 0.7rem; letter-spacing: 0.05em;">Follow-up Req.</small>
-                    <div style="font-size: 1.6rem; font-weight: 800; color: #4fd1c5; margin-top: 0.2rem;">{{ stats.followup }}</div>
+                <article style="padding: 1.25rem; margin: 0; background: #111827; border: 1px solid rgba(245, 158, 11, 0.25); border-radius: 8px; text-align: center;">
+                    <small style="color: #fbbf24; text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Flagged Outlets</small>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #fbbf24; margin-top: 0.3rem;">{{ stats.flagged }}</div>
                 </article>
             </div>
         </section>
 
-        {% if records %}
-        <figure style="margin-top: 2rem; overflow-x: auto;">
-            <table role="grid" style="white-space: nowrap;">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Customer Details</th>
-                        <th>Date/Time</th>
-                        <th>Outlet</th>
-                        <th>Category</th>
-                        <th>Severity</th>
-                        <th>Status</th>
-                        <th style="text-align: right;">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for r in records %}
-                    <!-- Main Row -->
-                    <tr>
-                        <td>
-                            <strong style="font-family: monospace; font-size: 0.95rem;">{{ r.get('complaint_id', 'N/A') }}</strong><br>
-                        </td>
-                        <td>
-                            <strong style="color: #e2e8f0;">{{ r.get('name', 'Anonymous') }}</strong><br>
-                            <span style="color: #a0aec0; font-size: 0.8rem;">{{ r.get('email', 'No email') }}</span><br>
-                            <span style="color: #a0aec0; font-size: 0.8rem;">{{ r.get('phone', 'No phone') }}</span>
-                        </td>
+        <!-- Executive Status Banner -->
+        {% set urgent_outlets = outlet_overview | selectattr('urgent_count', 'greaterthan', 0) | list %}
+        {% set flagged_outlets = outlet_overview | selectattr('is_flagged') | list %}
+        
+        <div style="background: #111827; border: 1px solid {% if urgent_outlets or flagged_outlets %}rgba(239, 68, 68, 0.35)%}{% else %}rgba(16, 185, 129, 0.25)%}{% endif %}; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                <span style="font-size: 1.1rem;">{% if urgent_outlets or flagged_outlets %}⚠️{% else %}✅{% endif %}</span>
+                <div>
+                    <span style="font-size: 0.9rem; font-weight: 600; color: #f9fafb;">
+                        {% if urgent_outlets or flagged_outlets %}
+                            Action Required:
+                        {% else %}
+                            System Status: All Outlets Nominal
+                        {% endif %}
+                    </span>
+                    <span style="font-size: 0.9rem; color: #9ca3af; margin-left: 0.35rem;">
+                        {% if urgent_outlets %}
+                            <strong style="color: #f87171;">{{ urgent_outlets | length }} outlet</strong> requires immediate escalation review.
+                        {% elif flagged_outlets %}
+                            <strong style="color: #fbbf24;">{{ flagged_outlets | length }} outlet</strong> flagged for operational patterns.
+                        {% else %}
+                            Operating normally across all regional metrics.
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
 
-                        <td>
-                            <span style="color: #718096; font-size: 0.8rem; line-height: 1.2;">
-                                {% set raw_dt = r.get('datetime', '') %}
-                                {% if raw_dt %}
-                                    {{ raw_dt[:10] }}<br>
-                                    <span style="font-size: 0.75rem; color: #a0aec0;">{{ raw_dt[11:16] }}</span>
-                                {% else %}
-                                    N/A
-                                {% endif %}
-                            </span>
-                        </td>
-                        <td>
-                            <mark style="padding: 0.2rem 0.5rem; font-size: 0.85rem; font-weight: bold;">{{ r.get('outlet_name', 'N/A') }}</mark>
-                        </td>
-                        <td>
-                            <span style="font-weight: 500;">{{ r.get('category', 'N/A') | replace('_', ' ') | title }}</span>
-                        </td>
-                        <td>
-                            {% set sev = (r.get('final_severity') or 'low') | lower %}
-                            <span class="badge-{{ sev }}">{{ r.get('final_severity', 'LOW') | upper }}</span><br>
-                        </td>
-                        <td>
-                            {% if r.get('outlet_flagged') %}    
-                                <span class="pill-flagged">Flagged ⚠️</span>
-                            {% else %}
-                                <span class="pill-normal">Normal</span>
-                            {% endif %}
-                        </td>
-                        <td style="text-align: right;">
-                            <!-- Resolve Button -->
-                            <form action="/manager/resolve/{{ r.get('complaint_id') }}" method="POST" style="display:inline; margin: 0;">
-                                <button type="submit" class="outline secondary" style="padding: 0.25rem 0.6rem; font-size: 0.78rem; border-color: #38a169; color: #68d391;">
-                                    &check; Resolve
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                    
-                    <!-- Full-Width Expandable Sub-Row for Details -->
-                    <tr>
-                        <td colspan="7" style="background: rgba(0,0,0,0.15); padding: 0.5rem 1rem;">
-                            <details style="margin: 0;">
-                                <summary style="font-size: 0.85rem; color: #63b3ed; font-weight: 600; cursor: pointer; padding: 0.4rem 0;">
-                                    🔍 Click to expand full customer feedback & AI triage report for {{ r.get('complaint_id') }}
-                                </summary>
-                                <div style="font-size: 0.9rem; margin: 0.75rem 0; padding: 1rem; background: rgba(0,0,0,0.25); border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); white-space: normal;">
-                                    <div class="grid" style="gap: 1.5rem;">
-                                        <div>
-                                            <p style="margin-bottom: 0.25rem;"><strong style="color: #e2e8f0;">Customer Description:</strong></p>
-                                            <p style="color: #cbd5e0; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 4px; margin-bottom: 0;">
-                                                "{{ r.get('description', 'No description provided.') }}"
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p style="margin-bottom: 0.25rem;"><strong style="color: #e2e8f0;">AI Analysis & Insights:</strong></p>
-                                            <!-- Display the reasoning / summary -->
-                                            <p style="color: #cbd5e0; background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 4px; margin-bottom: 0.5rem;">
-                                                {{ r.get('reason', 'No AI analysis available.') }}
-                                            </p>
+        <!-- 2. Outlet Status Overview List -->
+        <h4 style="font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">Outlet Status Overview</h4>
+        
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for o in outlet_overview %}
+            <a href="/manager/outlet/{{ o.id }}" class="outlet-summary-card" style="display: grid; grid-template-columns: 220px 1fr auto; align-items: center; padding: 0.95rem 1.25rem; background: #111827; border: 1px solid #1f2937; border-radius: 8px; transition: border-color 0.2s; text-decoration: none; color: inherit; cursor: pointer;" onmouseover="this.style.borderColor='#374151'" onmouseout="this.style.borderColor='#1f2937'">
+                
+                <!-- Column 1: Outlet Name -->
+                <div>
+                    <h5 style="margin: 0; font-size: 1rem; font-weight: 600; color: #f9fafb;">📍 {{ o.name }}</h5>
+                </div>
+                
+                <!-- Column 2: Clean Metrics Group -->
+                <div style="font-size: 0.82rem; color: #d1d5db; display: grid; grid-template-columns: 100px 180px 140px; align-items: center; border-left: 1px solid #1f2937; padding-left: 1.5rem; white-space: nowrap;">
+                    <span>Active: <strong style="color: #f3f4f6;">{{ o.active_count }}</strong></span>
+                    <span style="border-left: 1px solid #374151; padding-left: 1rem;">High / Critical: <strong style="color: {{ o.urgent_color }};">{{ o.urgent_count }}</strong></span>
+                    <span style="border-left: 1px solid #374151; padding-left: 1rem;">Follow-ups: <strong style="color: {{ o.followup_color }};">{{ o.followup_count }}</strong></span>
+                </div>
+                
+                <!-- Column 3: Status Pill & Arrow -->
+                <div style="display: flex; align-items: center; gap: 1rem; justify-self: end;">
+                    {% if o.is_flagged %}
+                        <span class="pill-flagged">Flagged ⚠️</span>
+                    {% elif o.urgent_count > 0 %}
+                        <span style="background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600;">Attention ⚡</span>
+                    {% else %}
+                        <span class="pill-normal">Normal</span>
+                    {% endif %}
+                    <span style="color: #4b5563; font-size: 0.85rem;">→</span>
+                </div>
 
-                                            <!-- Display key details if available -->
-                                            {% if r.get('key_details') %}
-                                            <div style="font-size: 0.85rem; color: #a0aec0; margin-bottom: 0.5rem;">
-                                                <strong>Key Details:</strong> {{ r.get('key_details') | join(', ') }}
-                                            </div>
-                                            {% endif %}
-
-                                            {% if r.get('wants_followup') %}
-                                            <div style="margin-top: 0.5rem; color: #4fd1c5; font-weight: 600; font-size: 0.8rem;">
-                                                &check; Customer requested direct follow-up contact.
-                                            </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-                            </details>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </figure>
-        {% endif %}
+            </a>
+            {% endfor %}
+        </div>
     </main>
 </body>
 </html>
