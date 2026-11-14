@@ -32,7 +32,7 @@
         .outlet-summary-card { background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 1.25rem; text-align: left; }
         
         /* Status Badges & Pills */
-        .pill-flagged { background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
+        .pill-flagged { background-color: rgba(239, 68, 68, 0.12); color: #fbbf24; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
         .pill-normal { background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; display: inline-block; }
     </style>
 </head>
@@ -82,13 +82,13 @@
         
         <div style="background: #111827; border: 1px solid {% if urgent_outlets or flagged_outlets %}rgba(239, 68, 68, 0.35)%}{% else %}rgba(16, 185, 129, 0.25)%}{% endif %}; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
             <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.1rem;">{% if urgent_outlets or flagged_outlets %}⚠️{% else %}✅{% endif %}</span>
+                <span style="font-size: 1.1rem;">{% if urgent_outlets or flagged_outlets %}‼️{% else %}🟢{% endif %}</span>
                 <div>
                     <span style="font-size: 0.9rem; font-weight: 600; color: #f9fafb;">
                         {% if urgent_outlets or flagged_outlets %}
                             Action Required:
                         {% else %}
-                            System Status: All Outlets Nominal
+                            System Status:
                         {% endif %}
                     </span>
                     <span style="font-size: 0.9rem; color: #9ca3af; margin-left: 0.35rem;">
@@ -97,7 +97,7 @@
                         {% elif flagged_outlets %}
                             <strong style="color: #fbbf24;">{{ flagged_outlets | length }} outlet</strong> flagged for operational patterns.
                         {% else %}
-                            Operating normally across all regional metrics.
+                            All outlets operations normal and running smoothly.
                         {% endif %}
                     </span>
                 </div>
@@ -126,9 +126,9 @@
                 <!-- Column 3: Status Pill & Arrow -->
                 <div style="display: flex; align-items: center; gap: 1rem; justify-self: end;">
                     {% if o.is_flagged %}
-                        <span class="pill-flagged">Flagged ⚠️</span>
+                        <span class="pill-flagged">Flagged</span>
                     {% elif o.urgent_count > 0 %}
-                        <span style="background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600;">Attention ⚡</span>
+                        <span style="background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600;">Attention</span>
                     {% else %}
                         <span class="pill-normal">Normal</span>
                     {% endif %}
