@@ -12,7 +12,7 @@ import pytest
 import app as app_module
 from data_manager import ComplaintDataManager, MerchantConfigManager
 
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "merchant_config.json")
+CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "merchant_config.json")
 FMT = "%Y-%m-%dT%H:%M:%S"
 
 AI_OUTPUT = {
