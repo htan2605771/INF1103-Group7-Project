@@ -83,7 +83,7 @@ class ComplaintEvaluator:
     def check_outlet_pattern(self, history: list[dict], current_outlet_id: str = None, current_complaint: dict = None) -> tuple[bool, list[str]]:
         """
         Flags an outlet if within a rolling 7-day window:
-        1. 2 or more complaints with at least 1 hygiene issue.
+        1. 1 or more active hygiene complaints.
         2. 3 or more active valid complaints.
         3. 1 or more active high-severity issues.
         Returns a clean 2-tuple: (is_flagged: bool, reasons: list[str]).
@@ -137,15 +137,19 @@ class ComplaintEvaluator:
 
         reasons = []
 
-        # Rule 1: 2+ complaints with at least 1 hygiene issue
+        # Rule 1: Hygiene threshold (1 or more active hygiene complaints)
         valid_hygiene_records = [
             r for r in valid_active_records 
-            if str(r.get("category", "")).lower() == "hygiene" or str(r.get("ai_category", "")).lower() == "hygiene"
+            if (
+                str(r.get("category", "")).lower() == "hygiene" 
+                or str(r.get("ai_category", "")).lower() == "hygiene"
+                or any(keyword in str(r.get("description", "")).lower() for keyword in self.SAFETY_KEYWORDS)
+            )
         ]
-        if len(valid_active_records) >= 2 and len(valid_hygiene_records) >= 1:
-            reasons.append("Hygiene-related complaint detected within a multiple-complaint window.")
+        if len(valid_hygiene_records) >= 1:
+            reasons.append("Hygiene-related complaint detected within the rolling 7-day window.")
 
-        # Rule 2: Volume threshold (3 or more active valid complaints)
+        # Rule 2: Volume threshold (3 or more active valid complaints in the 7-day window)
         if len(valid_active_records) >= 3:
             reasons.append("High complaint volume recorded within the rolling 7-day window.")
 
