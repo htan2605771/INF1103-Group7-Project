@@ -29,11 +29,27 @@
         }
         
         /* Outlet Summary Card Grid */
-        .outlet-summary-card { background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 1.25rem; text-align: left; }
+        .outlet-summary-card { 
+            background: #111827; 
+            border: 1px solid #1f2937; 
+            border-radius: 8px; 
+            padding: 0.95rem 1.25rem; 
+            display: grid; 
+            grid-template-columns: 220px 1fr auto; 
+            align-items: center; 
+            transition: border-color 0.2s; 
+            text-decoration: none; 
+            color: inherit; 
+            cursor: pointer;
+        }
+        .outlet-summary-card:hover {
+            border-color: #374151;
+        }
         
         /* Status Badges & Pills */
         .pill-flagged { background-color: rgba(239, 68, 68, 0.12); color: #fbbf24; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
         .pill-normal { background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; display: inline-block; }
+        .pill-urgent { background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
     </style>
 </head>
 <body>
@@ -43,7 +59,7 @@
             <ul>
                 <li>
                     <h2 style="margin: 0; font-weight: 700; font-size: 1.25rem; color: #f9fafb;">
-                        ServeTriage AI <span style="color: #60a5fa; font-weight: 400; font-size: 0.9rem;">Manager Console</span>
+                        ServeTriage AI <span style="color: #63b3ed; font-weight: 400; font-size: 0.9rem;">Manager Console</span>
                     </h2>
                 </li>
             </ul>
@@ -76,40 +92,12 @@
             </div>
         </section>
 
-        <!-- Executive Status Banner -->
-        {% set urgent_outlets = outlet_overview | selectattr('urgent_count', 'greaterthan', 0) | list %}
-        {% set flagged_outlets = outlet_overview | selectattr('is_flagged') | list %}
-        
-        <div style="background: #111827; border: 1px solid {% if urgent_outlets or flagged_outlets %}rgba(239, 68, 68, 0.35)%}{% else %}rgba(16, 185, 129, 0.25)%}{% endif %}; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 0.75rem;">
-                <span style="font-size: 1.1rem;">{% if urgent_outlets or flagged_outlets %}‼️{% else %}🟢{% endif %}</span>
-                <div>
-                    <span style="font-size: 0.9rem; font-weight: 600; color: #f9fafb;">
-                        {% if urgent_outlets or flagged_outlets %}
-                            Action Required:
-                        {% else %}
-                            System Status:
-                        {% endif %}
-                    </span>
-                    <span style="font-size: 0.9rem; color: #9ca3af; margin-left: 0.35rem;">
-                        {% if urgent_outlets %}
-                            <strong style="color: #f87171;">{{ urgent_outlets | length }} outlet</strong> requires immediate escalation review.
-                        {% elif flagged_outlets %}
-                            <strong style="color: #fbbf24;">{{ flagged_outlets | length }} outlet</strong> flagged for operational patterns.
-                        {% else %}
-                            All outlets operations normal and running smoothly.
-                        {% endif %}
-                    </span>
-                </div>
-            </div>
-        </div>
-
         <!-- 2. Outlet Status Overview List -->
         <h4 style="font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">Outlet Status Overview</h4>
         
         <div style="display: flex; flex-direction: column; gap: 0.75rem;">
             {% for o in outlet_overview %}
-            <a href="/manager/outlet/{{ o.id }}" class="outlet-summary-card" style="display: grid; grid-template-columns: 220px 1fr auto; align-items: center; padding: 0.95rem 1.25rem; background: #111827; border: 1px solid #1f2937; border-radius: 8px; transition: border-color 0.2s; text-decoration: none; color: inherit; cursor: pointer;" onmouseover="this.style.borderColor='#374151'" onmouseout="this.style.borderColor='#1f2937'">
+            <a href="/manager/outlet/{{ o.id }}" class="outlet-summary-card">
                 
                 <!-- Column 1: Outlet Name -->
                 <div>
@@ -119,8 +107,8 @@
                 <!-- Column 2: Clean Metrics Group -->
                 <div style="font-size: 0.82rem; color: #d1d5db; display: grid; grid-template-columns: 100px 180px 140px; align-items: center; border-left: 1px solid #1f2937; padding-left: 1.5rem; white-space: nowrap;">
                     <span>Active: <strong style="color: #f3f4f6;">{{ o.active_count }}</strong></span>
-                    <span style="border-left: 1px solid #374151; padding-left: 1rem;">High / Critical: <strong style="color: {{ o.urgent_color }};">{{ o.urgent_count }}</strong></span>
-                    <span style="border-left: 1px solid #374151; padding-left: 1rem;">Follow-ups: <strong style="color: {{ o.followup_color }};">{{ o.followup_count }}</strong></span>
+                    <span style="border-left: 1px solid #374151; padding-left: 1rem;">High / Critical: <strong style="color: {{ '#f87171' if o.urgent_count > 0 else '#f3f4f6' }};">{{ o.urgent_count }}</strong></span>
+                    <span style="border-left: 1px solid #374151; padding-left: 1rem;">Follow-ups: <strong style="color: {{ '#2dd4bf' if o.followup_count > 0 else '#f3f4f6' }};">{{ o.followup_count }}</strong></span>
                 </div>
                 
                 <!-- Column 3: Status Pill & Arrow -->
@@ -128,7 +116,7 @@
                     {% if o.is_flagged %}
                         <span class="pill-flagged">Flagged</span>
                     {% elif o.urgent_count > 0 %}
-                        <span style="background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600;">Attention</span>
+                        <span class="pill-urgent">Attention</span>
                     {% else %}
                         <span class="pill-normal">Normal</span>
                     {% endif %}
