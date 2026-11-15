@@ -77,18 +77,19 @@ class ComplaintEvaluator:
             return True
         return False
 
-    def check_outlet_pattern(self, history: list[dict], current_outlet_id: str = None, current_complaint: dict = None) -> tuple[bool, str]:
+    def check_outlet_pattern(self, history: list[dict], current_outlet_id: str = None, current_complaint: dict = None) -> tuple[bool, list[str]]:
         """
         Flags an outlet if within a rolling 7-day window:
-        1. ANY genuine hygiene-related complaint is detected.
-        2. OR there are 3 or more total valid complaints.
+        1. 1 or more active hygiene complaints (unresolved).
+        2. 3 or more active valid complaints in the window (unresolved volume).
+        3. 1 or more active high-severity issues (unresolved).
         """
         if not current_outlet_id:
-            return False, ""
+            return False, []
 
-        outlet_records = [r for r in history if r.get("outlet_id") == current_outlet_id]
-        if not outlet_records:
-            return False, ""
+        outlet_all_records = [r for r in history if r.get("outlet_id") == current_outlet_id]
+        if not outlet_all_records:
+            return False, []
             
         latest_dt_str = current_complaint.get("datetime") if current_complaint else None
         try:
@@ -98,32 +99,51 @@ class ComplaintEvaluator:
 
         window_start = latest_dt - timedelta(days=7)
 
-        recent_records = []
-        for r in outlet_records:
+        # Helper to parse and check if a record falls within the 7-day window
+        def is_in_window(r):
+            dt_str = r.get("datetime")
+            if not dt_str:
+                return False
             try:
-                r_dt = datetime.fromisoformat(r.get("datetime", ""))
-                if r_dt >= window_start:
-                    recent_records.append(r)
+                r_dt = datetime.fromisoformat(dt_str)
+                return window_start <= r_dt <= latest_dt
             except (TypeError, ValueError):
-                recent_records.append(r)
+                return False
 
-        valid_hygiene_records = []
-        for r in recent_records:
-            cat = str(r.get("category", "")).lower()
-            ai_cat = str(r.get("ai_category", "")).lower()
-            is_hygiene_category = ("hygiene" in cat or "hygiene" in ai_cat)
-            
-            if is_hygiene_category and not self._is_insufficient_or_spam(r):
-                valid_hygiene_records.append(r)
+        # All records in the 7-day window
+        recent_all_records = [r for r in outlet_all_records if is_in_window(r)]
 
-        if valid_hygiene_records:
-            return True, "Hygiene-related complaint detected within the rolling 7-day window."
+        # Active (unresolved) records in the 7-day window
+        recent_active_records = [
+            r for r in recent_all_records 
+            if not r.get("is_addressed", False) and not r.get("resolved", False)
+        ]
+        valid_active_records = [r for r in recent_active_records if not self._is_insufficient_or_spam(r)]
 
-        valid_volume_records = [r for r in recent_records if not self._is_insufficient_or_spam(r)]
-        if len(valid_volume_records) >= 3:
-            return True, f"High complaint volume ({len(valid_volume_records)} complaints) recorded within the rolling 7-day window."
-            
-        return False, ""
+        reasons = []
+
+        # Rule 1: Hygiene threshold (1 or more active hygiene complaints)
+        valid_hygiene_records = [
+            r for r in valid_active_records 
+            if str(r.get("category", "")).lower() == "hygiene"
+        ]
+        if len(valid_hygiene_records) >= 1:
+            reasons.append("Hygiene-related complaint detected within the rolling 7-day window.")
+
+        # Rule 2: Volume threshold (3 or more active valid complaints in the 7-day window)
+        if len(valid_active_records) >= 3:
+            reasons.append("High complaint volume recorded within the rolling 7-day window.")
+
+        # Rule 3: High-severity threshold (1 or more active high-severity complaints remain)
+        high_severity_records = [
+            r for r in valid_active_records 
+            if str(r.get("final_severity", "")).lower() in ["high", "critical"]
+        ]
+        if len(high_severity_records) >= 1:
+            reasons.append("High-severity issue requires immediate escalation review.")
+
+        is_flagged = len(reasons) > 0
+        return is_flagged, reasons
 
     def determine_outcome(self, final_severity: str, ai_output: dict, outlet_flagged: bool, description: str) -> str:
         """Decides the outcome of the complaint based on business rules."""
