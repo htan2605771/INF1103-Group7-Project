@@ -61,18 +61,18 @@ class TestOutletPattern(unittest.TestCase):
         self.ev = ComplaintEvaluator()
 
     def test_empty_and_single_complaint_do_not_flag(self):
-        self.assertFalse(self.ev.check_outlet_pattern([]))
-        self.assertFalse(self.ev.check_outlet_pattern([{"category": "hygiene"}]))
+        self.assertFalse(self.ev.check_outlet_pattern([])[0])
+        self.assertFalse(self.ev.check_outlet_pattern([{"category": "hygiene"}])[0])
 
     def test_two_complaints_without_hygiene_do_not_flag(self):
-        self.assertFalse(self.ev.check_outlet_pattern([{"category": "service"}, {"category": "billing"}]))
+        self.assertFalse(self.ev.check_outlet_pattern([{"category": "service"}, {"category": "billing"}])[0])
 
     def test_two_complaints_with_customer_hygiene_flag(self):
-        self.assertTrue(self.ev.check_outlet_pattern([{"category": "service"}, {"category": "hygiene"}]))
+        self.assertTrue(self.ev.check_outlet_pattern([{"category": "service"}, {"category": "hygiene"}])[0])
 
     def test_ai_category_hygiene_also_counts(self):
         self.assertTrue(self.ev.check_outlet_pattern(
-            [{"category": "service", "ai_category": "hygiene"}, {"category": "billing"}]))
+            [{"category": "service", "ai_category": "hygiene"}, {"category": "billing"}])[0])
 
 
 class TestScore(unittest.TestCase):
