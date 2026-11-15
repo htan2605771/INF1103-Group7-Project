@@ -3,6 +3,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class ComplaintEvaluator:
     """Evaluates customer complaints against business rules and calculates priority scores."""
 
@@ -25,7 +26,7 @@ class ComplaintEvaluator:
         full_history = history + [complaint]
         outlet_id = complaint.get("outlet_id")
 
-        outlet_flagged, outlet_flag_reason = self.check_outlet_pattern(full_history, outlet_id, complaint)
+        outlet_flagged, _ = self.check_outlet_pattern(full_history, outlet_id, complaint)
         
         description_lower = complaint.get("description", "").lower()
         has_safety_keyword = any(keyword in description_lower for keyword in self.SAFETY_KEYWORDS)
@@ -49,7 +50,6 @@ class ComplaintEvaluator:
             "override_applied": override_applied,
             "override_reason": override_reason,
             "outlet_flagged": outlet_flagged,
-            "outlet_flag_reason": outlet_flag_reason
         }
 
     def calculate_score(self, final_severity: str, reputational_risk: bool, outlet_flagged: bool) -> int:
@@ -65,11 +65,14 @@ class ComplaintEvaluator:
 
     def _is_insufficient_or_spam(self, record: dict) -> bool:
         """Helper to detect if a record contains spam, gibberish, or insufficient information."""
+        if "description" not in record:
+            return False
+            
         desc = str(record.get("description", "")).strip().lower()
         key_details = str(record.get("key_details", "")).lower()
         reason = str(record.get("reason", "")).lower()
         
-        if len(desc) <= 3:
+        if desc and len(desc) <= 3:
             return True
         if "insufficient information" in key_details or "insufficient information" in reason:
             return True
@@ -80,18 +83,33 @@ class ComplaintEvaluator:
     def check_outlet_pattern(self, history: list[dict], current_outlet_id: str = None, current_complaint: dict = None) -> tuple[bool, list[str]]:
         """
         Flags an outlet if within a rolling 7-day window:
-        1. 1 or more active hygiene complaints (unresolved).
-        2. 3 or more active valid complaints in the window (unresolved volume).
-        3. 1 or more active high-severity issues (unresolved).
+        1. 2 or more complaints with at least 1 hygiene issue.
+        2. 3 or more active valid complaints.
+        3. 1 or more active high-severity issues.
+        Returns a clean 2-tuple: (is_flagged: bool, reasons: list[str]).
         """
-        if not current_outlet_id:
-            return False, []
+        all_records = list(history) if history else []
+        if current_complaint and current_complaint not in all_records:
+            all_records.append(current_complaint)
 
-        outlet_all_records = [r for r in history if r.get("outlet_id") == current_outlet_id]
-        if not outlet_all_records:
-            return False, []
-            
+        if not all_records:
+            return (False, [])
+
+        if current_outlet_id:
+            outlet_records = [r for r in all_records if r.get("outlet_id") == current_outlet_id or not r.get("outlet_id")]
+        else:
+            outlet_records = all_records
+
+        if not outlet_records:
+            return (False, [])
+
         latest_dt_str = current_complaint.get("datetime") if current_complaint else None
+        if not latest_dt_str and outlet_records:
+            for r in reversed(outlet_records):
+                if r.get("datetime"):
+                    latest_dt_str = r.get("datetime")
+                    break
+
         try:
             latest_dt = datetime.fromisoformat(latest_dt_str) if latest_dt_str else datetime.now()
         except (TypeError, ValueError):
@@ -99,21 +117,18 @@ class ComplaintEvaluator:
 
         window_start = latest_dt - timedelta(days=7)
 
-        # Helper to parse and check if a record falls within the 7-day window
         def is_in_window(r):
             dt_str = r.get("datetime")
             if not dt_str:
-                return False
+                return True
             try:
                 r_dt = datetime.fromisoformat(dt_str)
                 return window_start <= r_dt <= latest_dt
             except (TypeError, ValueError):
-                return False
+                return True
 
-        # All records in the 7-day window
-        recent_all_records = [r for r in outlet_all_records if is_in_window(r)]
+        recent_all_records = [r for r in outlet_records if is_in_window(r)]
 
-        # Active (unresolved) records in the 7-day window
         recent_active_records = [
             r for r in recent_all_records 
             if not r.get("is_addressed", False) and not r.get("resolved", False)
@@ -122,19 +137,19 @@ class ComplaintEvaluator:
 
         reasons = []
 
-        # Rule 1: Hygiene threshold (1 or more active hygiene complaints)
+        # Rule 1: 2+ complaints with at least 1 hygiene issue
         valid_hygiene_records = [
             r for r in valid_active_records 
-            if str(r.get("category", "")).lower() == "hygiene"
+            if str(r.get("category", "")).lower() == "hygiene" or str(r.get("ai_category", "")).lower() == "hygiene"
         ]
-        if len(valid_hygiene_records) >= 1:
-            reasons.append("Hygiene-related complaint detected within the rolling 7-day window.")
+        if len(valid_active_records) >= 2 and len(valid_hygiene_records) >= 1:
+            reasons.append("Hygiene-related complaint detected within a multiple-complaint window.")
 
-        # Rule 2: Volume threshold (3 or more active valid complaints in the 7-day window)
+        # Rule 2: Volume threshold (3 or more active valid complaints)
         if len(valid_active_records) >= 3:
             reasons.append("High complaint volume recorded within the rolling 7-day window.")
 
-        # Rule 3: High-severity threshold (1 or more active high-severity complaints remain)
+        # Rule 3: High-severity threshold (1 or more active high-severity complaints)
         high_severity_records = [
             r for r in valid_active_records 
             if str(r.get("final_severity", "")).lower() in ["high", "critical"]
@@ -143,7 +158,7 @@ class ComplaintEvaluator:
             reasons.append("High-severity issue requires immediate escalation review.")
 
         is_flagged = len(reasons) > 0
-        return is_flagged, reasons
+        return (is_flagged, reasons)
 
     def determine_outcome(self, final_severity: str, ai_output: dict, outlet_flagged: bool, description: str) -> str:
         """Decides the outcome of the complaint based on business rules."""
