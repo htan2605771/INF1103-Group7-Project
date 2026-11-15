@@ -29,7 +29,8 @@ ai_manager/             AIClient (abstract), GeminiClient, MockAIClient, Respons
 logic_manager/          ComplaintEvaluator (business rules)
 data_manager/           ComplaintStorage (abstract), ComplaintDataManager (JSON file), MerchantConfigManager
 complaints_data.json    stored complaint records
-test_*.py, pytest.ini   automated tests (run offline)
+tests/                  automated tests (run offline)
+pytest.ini              pytest settings (test folder, verbose output)
 Dockerfile              container image
 requirements.txt        Python dependencies
 .github/workflows/      CI workflow
@@ -140,16 +141,16 @@ What is covered:
 
 | File | Covers |
 |---|---|
-| `test_ai_manager.py` | AI response JSON parsing, response validation, prompt generation, fallback handling and AI response processing using MockAIClient. |
-| `test_logic_manager.py` | Core logic: ambiguous input, safety override, outlet flagging, score. |
-| `test_core_rules.py` | Outcome precedence, outlet pattern edge cases, score table, the multi-condition outlet rule. |
-| `test_data_manager.py` | Missing, empty, corrupt and wrong-shape data files, failed writes, ID generation, filtering, updating a complaint, abstract class behaviour and swapping storage backends. |
-| `test_manager_dashboard.py` | The new feature: manager login and access control, dashboard and outlet pages, resolving complaints and follow-ups, and the customer form (validation errors and a full submission with a stubbed AI). |
-| `test_gui.py` | Quick smoke tests that the web pages load and the dashboard is protected. |
-| `test_merchant_config.py` | Outlet configuration: valid, missing and corrupt files, store-name lookup and fallback. |
-| `test_io_manager.py` | Input validation, re-prompting on bad input (with scripted input), result/summary/retry displays. |
+| `tests/test_ai_manager.py` | AI response JSON parsing, response validation, prompt generation, fallback handling and AI response processing using MockAIClient. |
+| `tests/test_logic_manager.py` | Core logic: ambiguous input, safety override, outlet flagging, score. |
+| `tests/test_core_rules.py` | Outcome precedence, outlet pattern edge cases, score table, the multi-condition outlet rule. |
+| `tests/test_data_manager.py` | Missing, empty, corrupt and wrong-shape data files, failed writes, ID generation, filtering, updating a complaint, abstract class behaviour and swapping storage backends. |
+| `tests/test_manager_dashboard.py` | The new feature: manager login and access control, dashboard and outlet pages, resolving complaints and follow-ups, and the customer form (validation errors and a full submission with a stubbed AI). |
+| `tests/test_gui.py` | Quick smoke tests that the web pages load and the dashboard is protected. |
+| `tests/test_merchant_config.py` | Outlet configuration: valid, missing and corrupt files, store-name lookup and fallback. |
+| `tests/test_io_manager.py` | Input validation, re-prompting on bad input (with scripted input), result/summary/retry displays. |
 
-`pytest.ini` makes pytest print every test name. All automated tests run offline: the AI is replaced by mock clients and sample responses, the data and GUI tests use temporary files, and no Gemini API key is needed.
+`pytest.ini` points pytest at the `tests/` folder and makes it print every test name. All automated tests run offline: the AI is replaced by mock clients and sample responses, the data and GUI tests use temporary files, and no Gemini API key is needed.
 
 ## Continuous integration
 
