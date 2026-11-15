@@ -170,6 +170,44 @@ class TestFilter(DataManagerTestCase):
         self.assertEqual(self.dm.filter_by_outlet_and_date("OUT-01", days=7), [])
 
 
+class TestUpdateComplaint(DataManagerTestCase):
+    """Used by the manager dashboard to resolve a complaint or clear its follow-up flag."""
+
+    def setUp(self):
+        super().setUp()
+        self.dm.save_complaint(sample_complaint(), AI_OUTPUT, RESULT)
+        self.dm.save_complaint(sample_complaint(outlet_id="OUT-02"), AI_OUTPUT, RESULT)
+
+    def test_updates_only_the_matching_record_and_persists_it(self):
+        updated = self.dm.update_complaint("CMP-0002", lambda r: r.update(is_addressed=True))
+        self.assertEqual(updated["outlet_id"], "OUT-02")
+        reopened = ComplaintDataManager(self.path)  # a new run of the program
+        records = {r["complaint_id"]: r for r in reopened.load_complaints()}
+        self.assertTrue(records["CMP-0002"]["is_addressed"])
+        self.assertNotIn("is_addressed", records["CMP-0001"])
+
+    def test_unknown_id_returns_none_and_leaves_the_file_untouched(self):
+        with open(self.path) as f:
+            before = f.read()
+        self.assertIsNone(self.dm.update_complaint("CMP-9999", lambda r: r.update(is_addressed=True)))
+        with open(self.path) as f:
+            self.assertEqual(f.read(), before)
+
+    def test_unknown_id_on_missing_file_does_not_create_it(self):
+        fresh = ComplaintDataManager(os.path.join(self._tmp.name, "other.json"))
+        self.assertIsNone(fresh.update_complaint("CMP-0001", lambda r: None))
+        self.assertFalse(os.path.exists(fresh.data_file))
+
+    def test_write_failure_returns_none_and_does_not_raise(self):
+        class ReadOnlyStore(ComplaintDataManager):
+            def _write_all(self, records):
+                raise PermissionError("read-only")
+
+        store = ReadOnlyStore(self.path)
+        with self.assertLogs("data_manager", level="ERROR"):
+            self.assertIsNone(store.update_complaint("CMP-0001", lambda r: r.update(is_addressed=True)))
+
+
 class TestClassBehaviour(DataManagerTestCase):
     def test_abstract_base_class_cannot_be_instantiated(self):
         with self.assertRaises(TypeError):

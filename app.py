@@ -1,6 +1,5 @@
 from datetime import datetime
 import os
-import json
 from collections import defaultdict
 from flask import Flask, redirect, render_template, request, session, url_for, abort
 from ai_manager.ai_manager import AIManager
@@ -42,41 +41,10 @@ def _is_urgent(severity_str):
 
 
 def _update_record_status(complaint_id, update_callback):
-    """Helper function to load records, update a specific complaint, persist, and return its outlet ID."""
-    records = db_manager.load_complaints()
-    target_outlet_id = None
-    
-    for r in records:
-        if r.get("complaint_id") == complaint_id:
-            target_outlet_id = r.get("outlet_id")
-            update_callback(r)
-            break
-
-    # Persist changes back to storage
-    saved = False
-    try:
-        if hasattr(db_manager, "save_complaints"):
-            db_manager.save_complaints(records)
-            saved = True
-        elif hasattr(db_manager, "save_data"):
-            db_manager.save_data(records)
-            saved = True
-    except Exception as e:
-        print(f"Manager save method error: {e}")
-
-    # Fallback to direct JSON file write if manager methods aren't available
-    if not saved:
-        for filename in ["complaints_data.json", "data/complaints_data.json", "data/complaints.json"]:
-            try:
-                if os.path.exists(filename) or filename == "complaints_data.json":
-                    with open(filename, "w") as f:
-                        json.dump(records, f, indent=4)
-                    saved = True
-                    break
-            except Exception as e:
-                print(f"Error saving records to {filename}: {e}")
-
-    return target_outlet_id
+    """Apply update_callback to one stored complaint through the data manager.
+    Returns the complaint's outlet ID, or None if it was not found or could not be saved."""
+    updated = db_manager.update_complaint(complaint_id, update_callback)
+    return updated.get("outlet_id") if updated else None
 
 
 @app.route("/")
