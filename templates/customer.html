@@ -77,16 +77,21 @@
                 </label>
             </div>
 
-            <label>Complaint Category
-                <select name="category" required>
-                    <option value="" disabled selected>Select category...</option>
-                    <option value="food quality">Food Quality</option>
-                    <option value="service">Service</option>
-                    <option value="hygiene">Hygiene</option>
-                    <option value="billing">Billing</option>
-                    <option value="other">Other</option>
-                </select>
-            </label>
+            <div class="grid">
+                <label>Order Reference <small style="font-weight: normal; opacity: 0.7;">(Optional)</small>
+                    <input type="text" name="order_reference" placeholder="e.g., ORD-8492">
+                </label>
+                <label>Complaint Category
+                    <select name="category" required>
+                        <option value="" disabled selected>Select category...</option>
+                        <option value="food quality">Food Quality</option>
+                        <option value="service">Service</option>
+                        <option value="hygiene">Hygiene</option>
+                        <option value="billing">Billing</option>
+                        <option value="other">Other</option>
+                    </select>
+                </label>
+            </div>
 
             <label style="margin-bottom: 2rem;">Complaint Description
                 <textarea name="description" rows="4" required placeholder="Describe what went wrong..."></textarea>

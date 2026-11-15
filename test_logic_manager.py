@@ -1,4 +1,5 @@
 from logic_manager import ComplaintEvaluator
+from datetime import datetime
 
 # Instantiate the evaluator class for testing
 evaluator = ComplaintEvaluator()
@@ -71,9 +72,13 @@ def test_03_no_override_needed():
 
 
 def test_04_outlet_flagging():
-    """2 or more complaints with at least 1 hygiene issue should flag outlet_flagged = True."""
+    """2 or more complaints with at least 1 hygiene issue within the window should flag outlet_flagged = True."""
     print("\n--- Outlet Pattern Flagging Test ---")
+    now_str = datetime.now().isoformat()
+    
     complaint = {
+        "outlet_id": "outlet_A",
+        "datetime": now_str,
         "description": "The cashier was slightly rude to me during my visit.",
         "category": "hygiene"
     }
@@ -82,8 +87,16 @@ def test_04_outlet_flagging():
         "reputational_risk": False, 
         "confidence": "high"
     }
-    # history + [complaint] length will be 2, with at least one 'hygiene' category
-    history = [{"category": "service"}]
+    
+    # History needs matching outlet_id, a valid datetime within 7 days, and unaddressed status
+    history = [
+        {
+            "outlet_id": "outlet_A", 
+            "datetime": now_str, 
+            "category": "service", 
+            "is_addressed": False
+        }
+    ]
 
     result = evaluator.evaluate_complaint(complaint, ai_output, history)
 

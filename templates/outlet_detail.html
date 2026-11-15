@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ outlet.store_name }} | Manager Console</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+    <style>
+        :root {
+            --pico-background-color: #0b0f19;
+            --pico-card-background-color: #111827;
+            --pico-muted-border-color: #1f2937;
+        }
+        html, body {
+            background-color: #0b0f19;
+            color: #f3f4f6;
+            margin: 0;
+            min-height: 100vh;
+        }
+        body { display: flex; flex-direction: column; }
+        .dashboard-container { max-width: 1350px; width: 100%; margin: 0 auto; padding: 2rem 1.5rem 3rem 1.5rem; flex: 1; }
+        
+        /* Status Badges & Pills */
+        .pill-flagged { background-color: rgba(239, 68, 68, 0.12); color: #fbbf24; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
+        .pill-normal { background-color: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.25); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.78rem; display: inline-block; }
+        .pill-urgent { background-color: rgba(239, 68, 68, 0.12); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.25); padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.78rem; font-weight: 600; display: inline-block; }
+        
+        /* Reusable Metadata Tag Badge */
+        .meta-badge { font-family: monospace; font-size: 0.75rem; font-weight: 600; color: #9ca3af; background: #1f2937; padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; }
+
+        .action-btn { background: #1f2937; color: #f3f4f6; border: 1px solid #374151; padding: 0.3rem 0.75rem; border-radius: 6px; font-size: 0.78rem; text-decoration: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: background 0.2s; cursor: pointer; white-space: nowrap; margin: 0; }
+        .action-btn:hover { background: #374151; color: #fff; }
+    </style>
+</head>
+<body>
+    <main class="container dashboard-container">
+        <!-- Top Navbar -->
+        <nav style="border-bottom: 1px solid #1f2937; padding-bottom: 1rem; margin-bottom: 2rem;">
+            <ul>
+                <li>
+                    <a href="/manager" style="color: #60a5fa; text-decoration: none; font-size: 0.85rem; font-weight: 500;">← Back to Overview</a>
+                </li>
+            </ul>
+            <ul>
+                <li><a href="/manager-logout" role="button" class="outline secondary" style="padding: 0.25rem 0.75rem; font-size: 0.82rem; border-color: #374151;">Logout</a></li>
+            </ul>
+        </nav>
+
+        <!-- Store Header Banner with Summary -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 1.5rem;">
+            <div>
+                <div style="margin-bottom: 0.3rem;">
+                    <span class="meta-badge">
+                        {{ outlet.outlet_id }}
+                    </span>
+                </div>
+
+                <!-- Outlet Name -->
+                <h2 style="margin: 0; font-size: 1.5rem; font-weight: 700; color: #f9fafb;">📍 {{ outlet.store_name }}</h2>
+                
+                {% if attention_reasons %}
+                <div style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.3rem;">
+                    {% for reason in attention_reasons %}
+                    <p style="margin: 0; color: #f87171; font-size: 0.925rem; font-weight: 500;">- {{ reason }}</p>
+                    {% endfor %}
+                </div>
+                {% elif fallback_summary %}
+                {% set summary_color = '#f87171' if urgent_count > 0 else '#34d399' %}
+                <p style="margin: 0.5rem 0 0 0.4rem; color: {{ summary_color }}; font-size: 0.925rem; font-weight: 500;">
+                    {{ fallback_summary }}
+                </p>
+                {% endif %}
+            </div>
+            <div>
+                {% if is_flagged %}
+                    <span class="pill-flagged">Flagged Outlet</span>
+                {% elif urgent_count > 0 %}
+                    <span class="pill-urgent">Attention Required</span>
+                {% else %}
+                    <span class="pill-normal">Operations Normal</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Store-Specific KPI Cards -->
+        <section style="margin-bottom: 2rem;">
+            <div class="grid" style="grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                <article style="padding: 1.25rem; margin: 0; background: #111827; border: 1px solid #1f2937; border-radius: 8px; text-align: center;">
+                    <small style="color: #9ca3af; text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Active Store Queue</small>
+                    <div style="font-size: 1.8rem; font-weight: 800; margin-top: 0.3rem; color: #f3f4f6;">{{ active_count }}</div>
+                </article>
+                <article style="padding: 1.25rem; margin: 0; background: #111827; border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 8px; text-align: center;">
+                    <small style="color: #f87171; text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">High / Critical</small>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #f87171; margin-top: 0.3rem;">{{ urgent_count }}</div>
+                </article>
+                <article style="padding: 1.25rem; margin: 0; background: #111827; border: 1px solid rgba(20, 184, 166, 0.25); border-radius: 8px; text-align: center;">
+                    <small style="color: #2dd4bf; text-transform: uppercase; font-size: 0.7rem; font-weight: 600;">Follow-ups Required</small>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: #2dd4bf; margin-top: 0.3rem;">{{ followup_count }}</div>
+                </article>
+            </div>
+        </section>
+
+        <!-- Outlet Complaint Queue List -->
+        <h4 style="font-size: 0.85rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.75rem;">Active Tickets for {{ outlet.store_name }}</h4>
+        
+        {% if records %}
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            {% for r in records %}
+            {% set sev = (r.final_severity or '') | lower %}
+            {% set card_border = 'rgba(239, 68, 68, 0.5)' if sev in ['high', 'critical'] else ('rgba(245, 158, 11, 0.5)' if sev == 'medium' else '#1f2937') %}
+            
+            <div id="card-{{ r.complaint_id }}" style="background: #111827; border: 1px solid {{ card_border }}; border-radius: 8px; padding: 1.25rem;">
+                
+                <!-- Ticket Top Header -->
+                <div style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid #1f2937;">
+                    
+                    <!-- Top Sub-Row: Severity & Conditional Resolve Button -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
+                        <div>
+                            <span style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; background: {{ 'rgba(239, 68, 68, 0.15)' if sev in ['high', 'critical'] else ('rgba(245, 158, 11, 0.15)' if sev == 'medium' else 'rgba(16, 185, 129, 0.15)') }}; color: {{ '#f87171' if sev in ['high', 'critical'] else ('#fbbf24' if sev == 'medium' else '#34d399') }}; border: 1px solid {{ 'rgba(239, 68, 68, 0.3)' if sev in ['high', 'critical'] else ('rgba(245, 158, 11, 0.3)' if sev == 'medium' else 'rgba(16, 185, 129, 0.3)') }}; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 700;">
+                                Severity: {{ r.final_severity | capitalize }}
+                            </span>
+                        </div>
+
+                        <!-- Resolve button locked until wants_followup is cleared -->
+                        {% if not r.wants_followup %}
+                        <form action="{{ url_for('resolve_complaint', complaint_id=r.complaint_id) }}" method="POST" style="margin: 0; display: inline-flex;">
+                            <button type="submit" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.35rem 0.85rem; border-radius: 6px; font-size: 0.78rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem; transition: background 0.2s; margin: 0;">
+                                ✓ Resolve
+                            </button>
+                        </form>
+                        {% else %}
+                        <span style="font-size: 0.75rem; color: #9ca3af; font-style: italic;">Clear follow-up to enable resolution</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Bottom Sub-Row: Complaint ID, Conditional Order Ref, and Category Badges -->
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                        <span class="meta-badge">{{ r.complaint_id }}</span>
+                        
+                        {% if r.order_ref %}
+                        <span class="meta-badge">Ref: {{ r.order_ref }}</span>
+                        {% endif %}
+
+                        <span class="meta-badge">
+                            {{ r.category | replace('_', ' ') | title | default('General Feedback') }}
+                        </span>
+                    </div>
+
+                </div>
+
+                <!-- Customer Description -->
+                <div style="margin-bottom: 0.85rem; background: #0b0f19; padding: 1rem; border-radius: 6px; border: 1px solid #1e293b;">
+                    <span style="font-size: 0.7rem; text-transform: uppercase; color: #64748b; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.3rem;">Customer Description</span>
+                    <p style="margin: 0; font-size: 0.9rem; color: #e2e8f0; line-height: 1.5;">{{ r.text | default(r.description) }}</p>
+                </div>
+
+                <!-- Permanent AI Assessment Panel -->
+                <div style="margin-bottom: 1rem; background: #0f172a; border: 1px solid #1e293b; border-left: 3px solid #60a5fa; border-radius: 6px; padding: 1rem;">
+                    <div style="margin-bottom: {{ '0.75rem' if r.key_details else '0' }};">
+                        <span style="font-size: 0.7rem; text-transform: uppercase; color: #93c5fd; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">AI Assessment & Reason</span>
+                        <p style="margin: 0; font-size: 0.88rem; color: #cbd5e1; line-height: 1.4;">{{ r.reason | default('No advanced breakdown available.') }}</p>
+                    </div>
+                    
+                    {% if r.key_details %}
+                    <div style="border-top: 1px solid #1e293b; padding-top: 0.6rem;">
+                        <span style="font-size: 0.7rem; text-transform: uppercase; color: #93c5fd; font-weight: 700; letter-spacing: 0.05em; display: block; margin-bottom: 0.2rem;">Key Details / Tags</span>
+                        <p style="margin: 0; font-size: 0.85rem; color: #e2e8f0;">
+                            {% if r.key_details is iterable and r.key_details is not string %}
+                                {{ r.key_details | join(', ') }}
+                            {% else %}
+                                {{ r.key_details }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Contact & Action Controls -->
+                {% set phone = r.customer_phone or r.phone %}
+                {% set email = r.customer_email or r.email %}
+                {% set cust_name = r.customer_name or r.name or 'Guest' %}
+
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-top: 0.75rem; border-top: 1px solid #1f2937; flex-wrap: nowrap;">
+                    <div style="display: flex; align-items: center; gap: 0.4rem; white-space: nowrap;">
+                        <span style="font-size: 0.80rem; color: #9ca3af;">Customer:</span>
+                        <strong style="font-size: 0.85rem; color: #f3f4f6;">{{ cust_name }}</strong>
+                    </div>
+                    
+                    <div style="display: flex; gap: 0.5rem; align-items: center; white-space: nowrap;">
+                        {% if phone %}
+                            <a href="tel:{{ phone }}" class="action-btn">
+                                📞 {{ phone }}
+                            </a>
+                        {% endif %}
+                        {% if email %}
+                            <a href="mailto:{{ email }}?subject=Regarding your feedback at {{ outlet.store_name }} (#{{ r.complaint_id }})" class="action-btn">
+                                ✉️ {{ email }}
+                            </a>
+                        {% endif %}
+
+                        {% if r.wants_followup %}
+                            <form action="{{ url_for('resolve_followup', complaint_id=r.complaint_id) }}" method="POST" style="margin: 0; display: inline-flex; align-items: center;">
+                                <button type="submit" class="action-btn" style="background: rgba(45, 212, 191, 0.12); color: #2dd4bf; border: 1px solid rgba(45, 212, 191, 0.35);">
+                                    ✓ Clear Follow-up
+                                </button>
+                            </form>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div style="background: #111827; border: 1px solid #1f2937; border-radius: 8px; padding: 3rem; text-align: center; color: #9ca3af;">
+            <p style="margin: 0; font-size: 0.95rem;">No active complaints or escalations recorded for this outlet.</p>
+        </div>
+        {% endif %}
+    </main>
+</body>
+</html>
