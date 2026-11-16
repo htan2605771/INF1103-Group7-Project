@@ -7,7 +7,7 @@ import time
 
 class AIClient(ABC):
     # Parent class for AI clients. This class handles retries while child classes implement the send function.
-    def __init__(self, max_retries: int = 3, base_delays: int = 2):
+    def __init__(self, max_retries: int = 3, base_delays: int = 2) -> None:
         self.__max_retries = max_retries
         self.__base_delays = base_delays
         self.__logger = logging.getLogger(__name__)

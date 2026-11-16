@@ -7,7 +7,7 @@ from .response_validator import ResponseValidator # imports the class that valid
 
 
 class AIManager:
-    def __init__(self, client: AIClient):
+    def __init__(self, client: AIClient) -> None:
         self.__client = client
         self.__response_validator = ResponseValidator()
         self.__logger = logging.getLogger(__name__) # creates a logger for this file
