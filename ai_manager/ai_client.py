@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Callable
 from abc import ABC, abstractmethod
 import logging
 import time
@@ -12,7 +13,7 @@ class AIClient(ABC):
         self.__logger = logging.getLogger(__name__)
 
 
-    def call_ai_api(self, prompt: str, on_retry=None) -> str | None: # sends the prompt to the AI API and handle API failures
+    def call_ai_api(self, prompt: str, on_retry: Callable[[int, int, int], None] | None = None) -> str | None: # sends the prompt to the AI API and handle API failures
 
         for attempt in range(1, self.__max_retries + 1):
             try:

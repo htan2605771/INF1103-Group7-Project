@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Callable
 import logging # used to record API errors
 import json
 from .ai_client import AIClient # imports the parent class for AI clients
@@ -87,7 +88,7 @@ class AIManager:
         return fallback
 
 
-    def get_ai_output(self, complaint: dict, on_retry=None) -> dict: # run a complaint through the complete AI processing flow
+    def get_ai_output(self, complaint: dict, on_retry: Callable[[int, int, int], None] | None = None) -> dict: # run a complaint through the complete AI processing flow
         prompt = self._build_prompt(complaint)
         response = self.__client.call_ai_api(prompt, on_retry=on_retry)
         ai_output = self._parse_ai_response(response)
