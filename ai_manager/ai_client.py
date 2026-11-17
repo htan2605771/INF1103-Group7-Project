@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing import Callable
 from abc import ABC, abstractmethod
 import logging
 import time
@@ -6,13 +7,13 @@ import time
 
 class AIClient(ABC):
     # Parent class for AI clients. This class handles retries while child classes implement the send function.
-    def __init__(self, max_retries: int = 3, base_delays: int = 2):
+    def __init__(self, max_retries: int = 3, base_delays: int = 2) -> None:
         self.__max_retries = max_retries
         self.__base_delays = base_delays
         self.__logger = logging.getLogger(__name__)
 
 
-    def call_ai_api(self, prompt: str, on_retry=None) -> str | None: # sends the prompt to the AI API and handle API failures
+    def call_ai_api(self, prompt: str, on_retry: Callable[[int, int, int], None] | None = None) -> str | None: # sends the prompt to the AI API and handle API failures
 
         for attempt in range(1, self.__max_retries + 1):
             try:

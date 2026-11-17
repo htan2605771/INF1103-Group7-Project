@@ -22,3 +22,25 @@ class IOManager:
         """Displays AI retry notifications using IORetryDisplay."""
         retry_display = IORetryDisplay()
         retry_display.display_ai_retry(sleep_time, attempt, max_retries)
+
+    @staticmethod
+    def display_banner(record_count: int) -> None:
+        """Displays the application title and how many records were loaded."""
+        print("=" * 55)
+        print("      F&B CUSTOMER COMPLAINT TRIAGE SYSTEM      ")
+        print("=" * 55)
+        print(f"Loaded {record_count} existing complaint record(s).\n")
+
+    @staticmethod
+    def get_menu_choice() -> str:
+        """Shows the main menu and returns the option the user typed."""
+        print("\n--- Main Menu ---")
+        print("1. Submit new complaint")
+        print("2. View complaint history summary")
+        print("3. Exit")
+        return input("Select an option (1-3): ").strip()
+
+    @staticmethod
+    def display_message(message: str) -> None:
+        """Displays a plain message to the user."""
+        print(message)

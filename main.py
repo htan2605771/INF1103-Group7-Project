@@ -6,7 +6,7 @@ from ai_manager import AIManager, GeminiClient
 
 class TriageApp:
     # Main Application which owns and calls the four managers and runs the triage menu options.
-    def __init__(self):
+    def __init__(self) -> None:
         self.__collector = IOComplaintCollector()
         self.__io = IOManager()
         self.__ai = AIManager(GeminiClient())
@@ -49,34 +49,22 @@ class TriageApp:
 
     def main(self) -> None:
         """Loads stored records on startup and runs the main interactive loop."""
-        print("=" * 55)
-        print("      F&B CUSTOMER COMPLAINT TRIAGE SYSTEM      ")
-        print("=" * 55)
-
-        # Load existing complaint database on startup
         existing_records = self.__data.load_complaints()
-        print(f"Loaded {len(existing_records)} existing complaint record(s).\n")
-
+        self.__io.display_banner(len(existing_records))
 
         while True:
-            print("\n--- Main Menu ---")
-            print("1. Submit new complaint")
-            print("2. View complaint history summary")
-            print("3. Exit")
-
-            choice = input("Select an option (1-3): ").strip()
+            choice = self.__io.get_menu_choice()
 
             if choice == "1":
                 self.process_complaint()
             elif choice == "2":
-                # Refresh and view stored records
                 records = self.__data.load_complaints()
                 self.__io.display_summary(records)
             elif choice == "3":
-                print("\nExiting F&B Complaint Triage System. Goodbye!")
+                self.__io.display_message("\nExiting F&B Complaint Triage System. Goodbye!")
                 break
             else:
-                print("Invalid option. Please enter 1, 2, or 3.")
+                self.__io.display_message("Invalid option. Please enter 1, 2, or 3.")
 
 
 if __name__ == "__main__":
