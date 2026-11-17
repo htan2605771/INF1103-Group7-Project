@@ -14,7 +14,7 @@ from io_manager.complaint_validator import IOComplaintValidator
 load_dotenv()
 
 
-class ComplaintWebApp:
+class TriageWebApp:
     def __init__(self):
         self.app = Flask(__name__)
         
@@ -302,5 +302,5 @@ class ComplaintWebApp:
 
 
 if __name__ == "__main__":
-    web_app = ComplaintWebApp()
+    web_app = TriageWebApp()
     web_app.run()
