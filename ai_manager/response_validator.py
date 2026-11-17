@@ -4,7 +4,7 @@ import logging
 
 class ResponseValidator:
     # this class checks if the AI output follows the required schema and additional rules. It is used in AIManager to validate the AI output before further processing.
-    def __init__(self):
+    def __init__(self) -> None:
         self.__logger = logging.getLogger(__name__)
         self.__schema = {
             "ai_category": [str, ("food_quality", "service", "hygiene", "billing", "other")],

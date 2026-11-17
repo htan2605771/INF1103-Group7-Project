@@ -3,6 +3,7 @@
 import logging
 import re
 from abc import ABC, abstractmethod
+from typing import Callable
 from datetime import datetime, timedelta
 
 
@@ -54,6 +55,24 @@ class ComplaintStorage(ABC):
             self._logger.error("Could not save complaint %s: %s", complaint["complaint_id"], error)
             return False
         return True
+
+    def update_complaint(self, complaint_id: str, updater: Callable[[dict], None]) -> dict | None:
+        """Find one stored complaint by ID, let `updater(record)` change it in place, and save.
+        Returns the updated record, or None if the ID was not found or storage could not be written
+        (the error is logged, not raised). Nothing is written when the ID is not found."""
+        records = self.load_complaints()
+
+        for record in records:
+            if record.get("complaint_id") == complaint_id:
+                updater(record)
+                try:
+                    self._write_all(records)
+                except OSError as error:
+                    self._logger.error("Could not update complaint %s: %s", complaint_id, error)
+                    return None
+                return record
+
+        return None
 
     def filter_by_outlet_and_date(self, outlet_id: str, days: int) -> list[dict]:
         """Return all complaint records for a given outlet within the last `days` days."""

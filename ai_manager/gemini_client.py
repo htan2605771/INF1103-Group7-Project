@@ -8,7 +8,7 @@ from .ai_client import AIClient
 
 class GeminiClient(AIClient):
     # child class of the AIClient class. This class sends requests to the gemini api.
-    def __init__(self, max_retries: int = 3, base_delays: int = 2, model: str = "gemini-3.1-flash-lite"):
+    def __init__(self, max_retries: int = 3, base_delays: int = 2, model: str = "gemini-3.1-flash-lite") -> None:
         super().__init__(max_retries, base_delays)
         load_dotenv()  # Load environment variables from .env file
         self.__api_key = os.getenv("GEMINI_API_KEY")

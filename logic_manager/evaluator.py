@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import re
 import logging
 
 logger = logging.getLogger(__name__)
@@ -18,6 +19,15 @@ class ComplaintEvaluator:
         "high": 50,
     }
 
+    def _has_safety_keyword(self, text: str) -> bool:
+        """True if any safety keyword appears as a whole word (or its plural), so 'rat' matches
+        'a rat in the kitchen' and 'rats', but not 'frustrated' or 'rather'."""
+        text = str(text).lower()
+        return any(
+            re.search(r"\b" + re.escape(keyword) + r"(?:s|es)?\b", text)
+            for keyword in self.SAFETY_KEYWORDS
+        )
+
     def evaluate_complaint(self, complaint: dict, ai_output: dict, history: list[dict]) -> dict:
         """
         Evaluates incoming complaint against business rules, overriding AI misclassifications
@@ -29,7 +39,7 @@ class ComplaintEvaluator:
         outlet_flagged, _ = self.check_outlet_pattern(full_history, outlet_id, complaint)
         
         description_lower = complaint.get("description", "").lower()
-        has_safety_keyword = any(keyword in description_lower for keyword in self.SAFETY_KEYWORDS)
+        has_safety_keyword = self._has_safety_keyword(description_lower)
 
         ai_severity = ai_output.get("severity", "medium")
         final_severity = ai_severity
@@ -142,8 +152,7 @@ class ComplaintEvaluator:
                 if (
                     str(r.get("category", "")).lower() == "hygiene" 
                     or str(r.get("ai_category", "")).lower() == "hygiene"
-                    or any(keyword in str(r.get("description", "")).lower() for keyword in self.SAFETY_KEYWORDS)
-                )
+                    or self._has_safety_keyword(r.get("description", ""))                )
             ]
             if len(valid_active_records) >= 2 and len(valid_hygiene_records) >= 1:
                 reasons.append("Hygiene-related complaint detected within the rolling 7-day window.")

@@ -5,7 +5,7 @@ from .ai_client import AIClient
 class MockAIClient(AIClient):
     # Fake AI client for testing purposes. It simulates the behavior of an AI API without making actual network calls.
     # it returns a valid JSON sample response by default.
-    def __init__(self, max_retries: int = 3, base_delays: int = 2, response: str | None = None):
+    def __init__(self, max_retries: int = 3, base_delays: int = 2, response: str | None = None) -> None:
         super().__init__(max_retries, base_delays)
         self.__response = response
 
