@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 import pytest
 
 import app as app_module
+web = app_module.web_app
+
 from data_manager import ComplaintDataManager, MerchantConfigManager
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "merchant_config.json")
@@ -32,9 +34,9 @@ class StubAI:
 def store(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)  # anything written by relative path lands in the temp folder
     storage = ComplaintDataManager(str(tmp_path / "complaints_data.json"))
-    monkeypatch.setattr(app_module, "db_manager", storage)
-    monkeypatch.setattr(app_module, "config_manager", MerchantConfigManager(CONFIG_PATH))
-    monkeypatch.setattr(app_module, "ai", StubAI())
+    monkeypatch.setattr(app_module.web_app, "db_manager", storage)
+    monkeypatch.setattr(app_module.web_app, "config_manager", MerchantConfigManager(CONFIG_PATH))
+    monkeypatch.setattr(app_module.web_app, "ai", StubAI())
     return storage
 
 
@@ -88,7 +90,7 @@ def test_wrong_password_is_rejected(client):
 
 
 def test_correct_password_logs_in_and_redirects_to_dashboard(client):
-    response = client.post("/manager-login", data={"password": app_module.MANAGER_PASSWORD})
+    response = client.post("/manager-login", data={"password": app_module.web_app.manager_password})
     assert response.status_code == 302
     assert response.headers["Location"].endswith("/manager")
 
