@@ -6,7 +6,7 @@ from ai_manager import AIManager, GeminiClient
 
 class TriageApp:
     # Main Application which owns and calls the four managers and runs the triage menu options.
-    def __init__(self):
+    def __init__(self) -> None:
         self.__collector = IOComplaintCollector()
         self.__io = IOManager()
         self.__ai = AIManager(GeminiClient())
