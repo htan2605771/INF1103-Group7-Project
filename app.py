@@ -301,6 +301,9 @@ class TriageWebApp:
         self.app.run(host=host, port=port, debug=debug_mode)
 
 
+# Instantiate the web application class
+web_app = TriageWebApp()
+app = web_app.app # For pytest
+
 if __name__ == "__main__":
-    web_app = TriageWebApp()
     web_app.run()
